@@ -33,17 +33,29 @@ cn='AND ARG AUS AUT BHR BEL BRA BGR CHL HRV CYP DNK EST FIN FRA DEU GRC HUN ISL 
 for p in cn:
     if mat[idx[p]][idx['CHN']] not in ('F',) or days[idx[p]][idx['CHN']]<30: setv(p,'CHN','F',30)
 print('changes',changes)
+import json as _j
+SJ='/root/dl_more/country-json/src/'
+ab={x['country']:x['abbreviation'] for x in _j.load(open(SJ+'country-by-abbreviation.json'))}
+pop={ab[x['country']]:x['population'] for x in _j.load(open(SJ+'country-by-population.json')) if x['country'] in ab and x['population']}
+drv={ab[x['country']]:x['side'] for x in _j.load(open(SJ+'country-by-driving-side.json')) if x['country'] in ab}
+tz=_j.load(open('/tmp/claude-0/-home-claude/f957879e-f6de-58eb-92ce-c65dd296c516/scratchpad/tz.json'))
+PRIMARY={'USA':'America/New_York','CAN':'America/Toronto','RUS':'Europe/Moscow','AUS':'Australia/Sydney','BRA':'America/Sao_Paulo','MEX':'America/Mexico_City','IDN':'Asia/Jakarta','KAZ':'Asia/Almaty','MNG':'Asia/Ulaanbaatar','CHL':'America/Santiago','ARG':'America/Argentina/Buenos_Aires','ESP':'Europe/Madrid','PRT':'Europe/Lisbon','FRA':'Europe/Paris','GBR':'Europe/London','NZL':'Pacific/Auckland','KIR':'Pacific/Tarawa','FSM':'Pacific/Pohnpei','COD':'Africa/Kinshasa','ECU':'America/Guayaquil','DNK':'Europe/Copenhagen','NLD':'Europe/Amsterdam','PNG':'Pacific/Port_Moresby','UKR':'Europe/Kyiv','CHN':'Asia/Shanghai','MYS':'Asia/Kuala_Lumpur','UZB':'Asia/Tashkent','CYP':'Asia/Nicosia','DEU':'Europe/Berlin','NOR':'Europe/Oslo','ECU':'America/Guayaquil','PYF':'Pacific/Tahiti'}
 countries=[]
 for c in codes:
     m=bym.get('UNK' if c=='XKX' else c,{})
-    countries.append(dict(c=c,n=m.get('name',{}).get('common',c),o=m.get('name',{}).get('official',''),
-      f=m.get('flag',''),cap=(m.get('capital') or [''])[0],r=m.get('region',''),sr=m.get('subregion',''),
-      lang=list((m.get('languages') or {}).values())[:3],
-      cur=[f"{v.get('name','')} ({k}{' '+v['symbol'] if v.get('symbol') else ''})" for k,v in (m.get('currencies') or {}).items()][:2],
-      idd=(m.get('idd',{}).get('root','')+(m.get('idd',{}).get('suffixes') or [''])[0] if len(m.get('idd',{}).get('suffixes') or [])==1 else m.get('idd',{}).get('root','')),
-      num=m.get('ccn3',''),ll=m.get('latlng',[0,0]),area=m.get('area',0),b=m.get('borders',[]),un=m.get('unMember',False)))
-for c in countries:
-    if c['c'] in('HKG','MAC'): pass
+    a2=m.get('cca2','XK' if c=='XKX' else '')
+    tzs=tz.get(a2,[])
+    p=PRIMARY.get(c)
+    if p and p in tzs: tzs=[p]+[x for x in tzs if x!=p]
+    idd=m.get('idd',{}); sfx=idd.get('suffixes') or []
+    countries.append(dict(c=c,a2=a2,n=m.get('name',{}).get('common',c),o=m.get('name',{}).get('official',''),
+      tr=m.get('translations',{}).get('tur',{}).get('common',''),tro=m.get('translations',{}).get('tur',{}).get('official',''),
+      cap=(m.get('capital') or [''])[0],r=m.get('region',''),sr=m.get('subregion',''),
+      lc=list((m.get('languages') or {}).keys())[:4],lang=list((m.get('languages') or {}).values())[:4],
+      cur=[[k,v.get('symbol',''),v.get('name','')] for k,v in (m.get('currencies') or {}).items()][:2],
+      idd=(idd.get('root','')+(sfx[0] if len(sfx)==1 else '')),tld=(m.get('tld') or [''])[0],
+      num=m.get('ccn3',''),ll=m.get('latlng',[0,0]),area=m.get('area',0),b=m.get('borders',[]),
+      land=bool(m.get('landlocked')),pop=pop.get(a2,0),drv=drv.get(a2,''),tz=tzs[:1],ntz=len(tzs)))
 out=dict(codes=codes,countries=countries,m=[''.join(r) for r in mat],d=[[x for x in r] for r in days])
 # compress days to sparse
 out['d']={codes[i]:{codes[j]:v for j,v in enumerate(r) if v} for i,r in enumerate(days)}

@@ -1,0 +1,208 @@
+/* ---------- Giriş kuralları (Türkçe) ---------- */
+const schengenProfileTR={
+  tags:['Schengen bölgesi','EES yürürlükte','ETIAS: 2026 sonu'],
+  items:[
+    ['Pasaport','Schengen bölgesinden planlanan çıkış tarihinizden sonra en az 3 ay geçerli olmalı ve son 10 yıl içinde düzenlenmiş olmalıdır.'],
+    ['Kalış süresi','Vizeden muaf ziyaretçiler, 29 Schengen ülkesinin toplamında herhangi bir 180 günlük dönemde en fazla 90 gün kalabilir.'],
+    ['Sınır','Giriş/Çıkış Sistemi (EES), AB dışı yolcuların ilk girişte parmak izini ve yüz görüntüsünü kaydeder ve pasaport damgasının yerini alır. Sınırda ek süre ayırın.'],
+    ['ETIAS','Vizeden muaf ülke vatandaşları, 2026\'nın son çeyreğinde başlaması planlanan ETIAS seyahat izni almak zorunda olacak (20 €, 3 yıl veya pasaport süresi bitene kadar geçerli).'],
+    ['Vize sahipleri','Kısa süreli Schengen vizesi için en az 30.000 € teminatlı seyahat sağlık sigortası, konaklama, maddi yeterlilik ve dönüş bileti belgeleri gerekir. Başvuru, ana varış ülkesine yapılır.'],
+    ['AB vatandaşları','AB, AEA ve İsviçre vatandaşları serbest dolaşım kapsamında pasaport veya kimlik kartıyla seyahat eder.']
+  ],
+  link:['AB seyahat portalı (EES / ETIAS)','https://travel-europe.europa.eu/']
+};
+const P_TR={
+GBR:{tags:['Vizesizler için ETA zorunlu'],items:[
+  ['Pasaport','Kalışınızın tamamı boyunca geçerli olmalıdır.'],
+  ['ETA','AB vatandaşları dahil vizeden muaf ziyaretçilerin seyahatten önce Elektronik Seyahat İzni (ETA) alması gerekir. Ücreti 20 £\'dur; 6 aya kadar birden fazla kalışa izin verir ve 2 yıl veya pasaport süresi bitene kadar geçerlidir. Çocuklar dahil her yolcunun kendi ETA\'sı olmalıdır.'],
+  ['Muaf olanlar','İrlanda vatandaşları ile İngiltere oturma izni veya geçerli İngiltere vizesi olanlar.'],
+  ['Süre','Kararlar genellikle 3 iş günü içinde gelir; UK ETA uygulamasıyla en az bir hafta önceden başvurun.'],
+  ['Vize gerekenler','Diğerleri çevrimiçi başvuru ve vize merkezinde biyometrik kayıtla Standart Ziyaretçi vizesi alır.']],
+  link:['GOV.UK: Elektronik Seyahat İzni','https://www.gov.uk/guidance/apply-for-an-electronic-travel-authorisation-eta']},
+IRL:{tags:['Schengen dışı','Ortak Seyahat Alanı'],items:[
+  ['Pasaport','Kalış süresi boyunca geçerli olmalıdır.'],
+  ['Kalış süresi','Vizeden muaf ziyaretçilere sınırda genellikle 90 güne kadar izin verilir.'],
+  ['Schengen','İrlanda AB üyesidir ancak Schengen bölgesinde değildir; Schengen vizesi İrlanda\'yı kapsamaz. ETIAS uygulanmayacak.'],
+  ['İngiltere bağlantısı','İrlanda ve İngiltere Ortak Seyahat Alanı\'nı oluşturur. İngiltere vizesi olan bazı vize gerektiren ülke vatandaşları, İngiliz-İrlanda Vize Programı ile İrlanda\'yı ziyaret edebilir.']],
+  link:['İrlanda Göç Servisi','https://www.irishimmigration.ie/']},
+CYP:{tags:['AB üyesi, Schengen dışı'],items:[
+  ['Pasaport','Çıkıştan sonra en az 3 ay geçerli olmalıdır.'],
+  ['Schengen','Kıbrıs AB kurallarını uygular ancak henüz tam Schengen üyesi değildir. Geçerli çok girişli Schengen vizesi olanlar genellikle 90 güne kadar girebilir.'],
+  ['Kuzey','Adanın kuzeyine geçişler ayrı kontrollere tabidir.'],
+  ['ETIAS','Başladığında Kıbrıs\'ta da uygulanması bekleniyor.']],
+  link:['Kıbrıs Dışişleri Bakanlığı','https://mfa.gov.cy/']},
+USA:{tags:['Vize Muafiyet Programı için ESTA'],items:[
+  ['ESTA','Vize Muafiyet Programı ülkelerinin vatandaşları hava veya deniz yoluyla gelmek için onaylı ESTA almalıdır. Ücret 40 $, 2 yıl geçerli, kalış başına en fazla 90 gün. Kalkıştan en az 72 saat önce başvurun.'],
+  ['Pasaport','Çipli elektronik pasaport olmalıdır. Birçok ülke altı ay kuralından muaftır ancak pasaport kalış boyunca geçerli olmalıdır.'],
+  ['Vize','Diğer herkes konsoloslukta yüz yüze mülakat gerektiren B1/B2 ziyaretçi vizesi almalıdır. Bekleme süreleri aylarca sürebilir.'],
+  ['Muaf olanlar','Kanada ve Bermuda vatandaşlarının ziyaretler için genellikle vize veya ESTA\'ya ihtiyacı yoktur.'],
+  ['Sınırda','Girişe ve kalış süresine görevli karar verir. Sosyal medya hesapları ve seyahat geçmişi sorulabilir.']],
+  link:['Resmî ESTA sitesi','https://esta.cbp.dhs.gov/']},
+CAN:{tags:['Havayolu girişleri için eTA'],items:[
+  ['eTA','Kanada\'ya uçan veya aktarma yapan vizeden muaf yolcuların eTA alması gerekir: 7 CAD, 5 yıl veya pasaport süresi bitene kadar geçerli. Kara veya deniz yoluyla girişte gerekmez.'],
+  ['Muaf olanlar','ABD vatandaşları ve yeşil kartını yanında taşıyan ABD daimi oturum sahipleri.'],
+  ['Kalış süresi','Genellikle 6 aya kadar; süreyi sınır görevlisi belirler.'],
+  ['Vize','Vize gerektiren ülke vatandaşları ziyaretçi vizesine çevrimiçi başvurur ve biyometrik verir.']],
+  link:['Kanada Hükümeti: eTA','https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada/eta.html']},
+MEX:{tags:['Dijital FMM'],items:[
+  ['Kalış süresi','Birçok ülke vatandaşı vizesiz girer; süreyi görevli belirler, en fazla 180 gün, bazen daha az.'],
+  ['Vize sahipleri','Geçerli ABD, Kanada, İngiltere, Japonya veya Schengen vizesi ya da bu ülkelerde oturma izni olan çoğu kişi Meksika vizesi olmadan girebilir.'],
+  ['Varış','Girişiniz büyük havalimanlarında dijital olarak (FMM) kaydedilir; çıkışa kadar damga veya kaydı saklayın.'],
+  ['Belgeler','Dönüş bileti, otel rezervasyonu ve maddi yeterlilik göstermeye hazır olun.']],
+  link:['Ulusal Göç Enstitüsü (INM)','https://www.gob.mx/inm']},
+BRA:{tags:['ABD/Kanada/Avustralya için 2025\'ten beri e-Vize'],items:[
+  ['Değişiklik','10 Nisan 2025\'ten itibaren ABD, Kanada ve Avustralya vatandaşlarının yeniden vize alması gerekiyor; vize çevrimiçi e-Vize olarak verilir.'],
+  ['Vizesiz','AB, İngiltere, çoğu Güney Amerika ülkesi ve birçok diğer ülke vatandaşı 90 güne kadar kalabilir.'],
+  ['Kimlikle giriş','Mercosur ve ortak ülke vatandaşları kimlik kartıyla girebilir.'],
+  ['Sağlık','Birçok bölge için sarıhumma aşısı önerilir.']],
+  link:['Brezilya Dışişleri Bakanlığı: vizeler','https://www.gov.br/mre/en/subjects/visas']},
+ARG:{items:[
+  ['Kalış süresi','Çoğu Batılı ve Latin Amerika ülkesi vatandaşı 90 güne kadar vizesizdir.'],
+  ['Kimlikle giriş','Mercosur vatandaşları kimlik kartı kullanabilir.'],
+  ['Pasaport','Kalış süresi boyunca geçerli olmalıdır.']],
+  link:['Ulusal Göç Müdürlüğü','https://www.argentina.gob.ar/interior/migraciones']},
+COL:{tags:['Check-MIG formu'],items:[
+  ['Kalış süresi','Vizeden muaf ziyaretçiler 90 gün alır; takvim yılı başına 180 güne uzatılabilir.'],
+  ['Ön kayıt','Ücretsiz Check-MIG formunu seyahatten önceki 72 saat içinde çevrimiçi doldurun.'],
+  ['Pasaport','Varışta geçerli olmalı; havayolları altı ay öneriyor.']],
+  link:['Migración Colombia: Check-MIG','https://apps.migracioncolombia.gov.co/pre-registro/']},
+PER:{items:[['Kalış süresi','Birçok ülke vatandaşı vizesizdir; görevli 183 güne kadar süre verir.'],['Kimlikle giriş','And Topluluğu ve bazı Mercosur vatandaşları kimlik kartı kullanabilir.'],['Pasaport','Altı ay geçerlilik önerilir.']],link:['Migraciones Perú','https://www.gob.pe/migraciones']},
+CHL:{items:[['Kalış süresi','Vizeden muaf ziyaretçilerin çoğu 90 gün alır.'],['Varış','Turist kartı varışta elektronik olarak verilir; çıkışa kadar saklayın.'],['Pasaport','Kalış süresi boyunca geçerli olmalıdır.']],link:['Ulusal Göç Servisi','https://serviciomigraciones.cl/']},
+CUB:{tags:['Turist kartı','D\'Viajeros formu'],items:[
+  ['Vize','Çoğu ziyaretçinin havayolları, acenteler veya çevrimiçi satılan turist kartına (tarjeta del turista) ihtiyacı vardır.'],
+  ['Form','Varıştan önce D\'Viajeros beyanını çevrimiçi doldurun.'],
+  ['Sigorta','Seyahat sağlık sigortası zorunludur ve kontrol edilebilir.'],
+  ['ABD kuralları','ABD vatandaşları ayrıca seyahat kategorilerini sınırlayan ABD yaptırım kurallarına tabidir.']],
+  link:['D\'Viajeros','https://dviajeros.mitrans.gob.cu/']},
+JPN:{tags:['Visit Japan Web'],items:[
+  ['Kalış süresi','Yaklaşık 70 ülkenin vatandaşları vizeden muaftır, çoğunlukla 90 güne kadar.'],
+  ['Pasaport','Kalış süresi boyunca geçerli olmalıdır.'],
+  ['Varış','Göç ve gümrük için QR kod almak üzere seyahatten önce Visit Japan Web\'e kaydolun.'],
+  ['Gelecek','Seyahat öncesi izin sistemi (JESTA) planlanıyor, 2028 civarı bekleniyor.'],
+  ['İlaçlar','Uyarıcı içerenler dahil bazı yaygın ilaçlar kısıtlıdır. Bavulunuzu hazırlamadan kontrol edin.']],
+  link:['Visit Japan Web','https://www.vjw.digital.go.jp/']},
+KOR:{tags:['K-ETA','e-Varış kartı'],items:[
+  ['K-ETA','Vizeden muaf ülke vatandaşlarının normalde uçağa binmeden K-ETA alması gerekir. ABD, İngiltere, Japonya, Avustralya ve Batı Avrupa\'nın çoğu dahil 22 ülke vatandaşı 31 Aralık 2026\'ya kadar muaftır.'],
+  ['Varış kartı','K-ETA\'dan muafsanız varıştan önceki 3 gün içinde e-Varış kartını çevrimiçi gönderin.'],
+  ['Kalış süresi','Vatandaşlığa göre genellikle 30–90 gün.']],
+  link:['Resmî K-ETA sitesi','https://www.k-eta.go.kr/']},
+CHN:{tags:['30 gün vizesiz (≈50 ülke)','240 saat transit'],items:[
+  ['Vizesiz','Avrupa\'nın çoğu, İngiltere, Kanada, Avustralya, Yeni Zelanda, Japonya, Güney Kore ile bazı Körfez ve Güney Amerika ülkeleri dahil yaklaşık 50 ülkenin umuma mahsus pasaport sahipleri 31 Aralık 2026\'ya kadar vizesiz 30 gün kalabilir.'],
+  ['Transit','ABD dahil 55 ülkenin vatandaşları, belirlenmiş giriş noktalarından üçüncü bir ülkeye aktarma yaparken onaylı devam biletiyle 240 saate kadar vizesiz kalabilir.'],
+  ['Pasaport','Varışta en az 6 ay geçerli olmalıdır.'],
+  ['Varış','Varış kartını çevrimiçi veya havalimanındaki kiosklarda doldurun. Oteller kaydınızı polise bildirir; özel konaklamalar 24 saat içinde kaydedilmelidir.'],
+  ['Ödeme','Gitmeden önce Alipay veya WeChat Pay\'i yabancı kartla kurun.']],
+  link:['Ulusal Göç İdaresi','https://en.nia.gov.cn/']},
+HKG:{items:[['Ayrı sistem','Hong Kong kendi göç sistemini uygular; Çin anakara vizesi gerekmez.'],['Kalış süresi','Yaklaşık 170 ülke vatandaşı 7–180 gün vizesizdir.'],['Pasaport','Kalıştan sonra en az 1 ay geçerli olmalıdır.']],link:['Hong Kong Göç Dairesi','https://www.immd.gov.hk/']},
+MAC:{items:[['Ayrı sistem','Makao\'nun Çin anakarasından ayrı kendi giriş kuralları vardır.'],['Kalış süresi','Çoğu ziyaretçi 30–90 gün vizesizdir.']],link:['Makao Kamu Güvenliği Polisi','https://www.fsm.gov.mo/psp/eng/']},
+TWN:{items:[['Kalış süresi','Birçok ülke vatandaşı 30–90 gün vizesizdir.'],['Varış kartı','Göç işlemlerini hızlandırmak için inişten önce çevrimiçi varış kartını doldurun.'],['Pasaport','En az 6 ay geçerli olmalıdır.']],link:['Tayvan Ulusal Göç Ajansı','https://www.immigration.gov.tw/']},
+IND:{tags:['e-Vize'],items:[
+  ['e-Vize','Yaklaşık 170 ülke vatandaşına açıktır: 30 günlük (çift giriş), 1 yıllık veya 5 yıllık (çok girişli) turist e-Vizesi. En az 4 gün önceden başvurun.'],
+  ['Pasaport','Varıştan itibaren en az 6 ay geçerli olmalı ve en az 2 boş sayfası bulunmalıdır.'],
+  ['Varış','İnişten önce dijital varış kartı doldurulabilir.'],
+  ['Muaf olanlar','Nepal ve Butan vatandaşlarının vizeye ihtiyacı yoktur.']],
+  link:['Resmî Hindistan e-Vize','https://indianvisaonline.gov.in/evisa/']},
+THA:{tags:['TDAC varış kartı'],items:[
+  ['Varış kartı','Tayland Dijital Varış Kartı (TDAC) 1 Mayıs 2025\'ten beri zorunludur. Varıştan önceki 3 gün içinde çevrimiçi ve ücretsiz doldurun.'],
+  ['Vizesiz','Yaklaşık 90 ülkenin vatandaşları şu anda 60 güne kadar vizesiz kalabilir. Hükümet bu süreyi kısaltmayı gündeme getirdi; rezervasyondan önce kontrol edin.'],
+  ['Pasaport','En az 6 ay geçerli olmalıdır.'],
+  ['Belgeler','Görevliler devam bileti ve maddi yeterlilik (kişi başı 20.000 THB) isteyebilir.'],
+  ['e-Vize','Vize gereken ülke vatandaşları resmî Tayland e-Vize sistemi üzerinden başvurur.']],
+  link:['Tayland Dijital Varış Kartı','https://tdac.immigration.go.th/']},
+VNM:{tags:['Herkese e-Vize'],items:[
+  ['e-Vize','Tüm ülke vatandaşlarına açıktır: tek veya çok girişli, 90 güne kadar.'],
+  ['Vizesiz','Bazı Avrupa ülkeleri, Japonya ve Güney Kore 45 gün vizesizdir.'],
+  ['Pasaport','En az 6 ay geçerli olmalıdır.']],
+  link:['Resmî Vietnam e-Vize','https://evisa.gov.vn/']},
+IDN:{tags:['e-VOA','Bali vergisi'],items:[
+  ['Vize','Çoğu ziyaretçi çevrimiçi alınan e-VOA (500.000 IDR) kullanır: 30 gün, bir kez uzatılabilir. ASEAN vatandaşları vizesizdir.'],
+  ['Varış kartı','All Indonesia dijital varış kartını (göç, gümrük, sağlık) varıştan önceki 3 gün içinde doldurun.'],
+  ['Bali','Bali ziyaretlerinde 150.000 IDR turist vergisi alınır.'],
+  ['Pasaport','En az 6 ay geçerli ve bir boş sayfalı olmalıdır.']],
+  link:['Endonezya e-Vize','https://evisa.imigrasi.go.id/']},
+MYS:{tags:['MDAC'],items:[
+  ['Varış kartı','Malezya Dijital Varış Kartını (MDAC) varıştan önceki 3 gün içinde gönderin. Singapur vatandaşları muaftır.'],
+  ['Kalış süresi','Çoğu Batılı ülke vatandaşı 90 gün vizesizdir.'],
+  ['Pasaport','En az 6 ay geçerli olmalıdır.']],
+  link:['Malezya Dijital Varış Kartı','https://imigresen-online.imi.gov.my/mdac/main']},
+SGP:{tags:['SG Varış Kartı'],items:[
+  ['Varış kartı','Ücretsiz SG Varış Kartını varıştan önceki 3 gün içinde çevrimiçi gönderin.'],
+  ['Kalış süresi','Vizesiz ziyaretçiler genellikle 30 veya 90 gün alır.'],
+  ['Pasaport','En az 6 ay geçerli olmalıdır.'],
+  ['Gümrük','Sakız, elektronik sigara ve ilaçlarla ilgili katı kurallar vardır.']],
+  link:['ICA SG Varış Kartı','https://eservices.ica.gov.sg/sgarrivalcard/']},
+PHL:{tags:['eTravel'],items:[
+  ['Kayıt','Varıştan önceki 72 saat içinde eTravel\'e (ücretsiz) kaydolun.'],
+  ['Kalış süresi','Birçok ülke vatandaşı 30 gün, bazıları daha uzun süre vizesizdir.'],
+  ['Devam bileti','Dönüş veya devam bileti zorunludur.']],
+  link:['Filipinler eTravel','https://etravel.gov.ph/']},
+ARE:{items:[
+  ['Vize','AB, İngiltere ve ABD vatandaşları dahil birçok ülke vatandaşı 30 veya 90 günlük ücretsiz kapıda vize alır.'],
+  ['Diğerleri','ABD vizesi, yeşil kart veya İngiltere/AB oturma izni olan bazı vize gerektiren ülke vatandaşları kapıda vizeye hak kazanır.'],
+  ['Pasaport','En az 6 ay geçerli olmalıdır.'],
+  ['İlaçlar','Reçetelerinizi yanınızda bulundurun; bazı ilaçlar kontrole tabidir.']],
+  link:['BAE resmî portalı: vizeler','https://u.ae/en/information-and-services/visa-and-emirates-id']},
+SAU:{tags:['Turist e-Vizesi'],items:[
+  ['e-Vize','Yaklaşık 60 ülke vatandaşı turist e-Vizesi veya kapıda vize alabilir: 1 yıl çok girişli, toplam 90 güne kadar, sigorta dahil.'],
+  ['Vize sahipleri','En az bir kez kullanılmış ABD, İngiltere veya Schengen vizesi olanlar genellikle kapıda vize alabilir.'],
+  ['Not','Turist vizesi Hac\'a izin vermez.']],
+  link:['Visit Saudi e-Vize','https://visa.visitsaudi.com/']},
+QAT:{items:[['Vizesiz','Birçok ülke vatandaşı 30–90 gün vizesizdir.'],['Diğerleri','Hayya platformu üzerinden e-Vize başvurusu yapın.'],['Pasaport','En az 6 ay geçerli olmalıdır.']],link:['Hayya','https://www.hayya.qa/']},
+TUR:{tags:['e-Vize'],items:[
+  ['Pasaport','Girişten itibaren en az 150 gün ve izin verilen kalış süresinin bitiminden sonra 60 gün geçerli olmalıdır.'],
+  ['Vizesiz','Avrupalıların çoğu ile ABD ve Kanada vatandaşları (2024\'ten beri) herhangi bir 180 günlük dönemde 90 güne kadar kalabilir.'],
+  ['e-Vize','Uygun ülke vatandaşları resmî e-Vize sitesinden başvurur; fazladan ücret alan aracı sitelerden kaçının.'],
+  ['Kimlikle giriş','Bazı AB ülkelerinin vatandaşları kimlik kartıyla girebilir.']],
+  link:['Resmî Türkiye e-Vize','https://www.evisa.gov.tr/']},
+EGY:{items:[
+  ['Vize','Birçok ülke vatandaşı için büyük havalimanlarında kapıda vize (25 $) alınabilir veya önceden e-Vize başvurusu yapılabilir.'],
+  ['Sina','Şarm El-Şeyh ve Güney Sina\'daki Kızıldeniz tatil yerlerine yapılan ziyaretlerde 15 gün geçerli ücretsiz damga kullanılabilir.'],
+  ['Pasaport','En az 6 ay geçerli olmalıdır.']],
+  link:['Mısır e-Vize portalı','https://visa2egypt.gov.eg/']},
+MAR:{items:[['Vizesiz','Birçok ülke vatandaşı 90 gün vizesizdir.'],['e-Vize','Bazı vize gerektiren ülke vatandaşları çevrimiçi başvurabilir.'],['Pasaport','Kalış boyunca geçerli olmalı; 6 ay önerilir.']],link:['Fas e-Vize','https://www.acces-maroc.ma/']},
+ZAF:{items:[
+  ['Vizesiz','Birçok ülke vatandaşı 30 veya 90 gün alır.'],
+  ['Pasaport','Çıkıştan sonra en az 30 gün geçerli olmalı ve damgalar için en az 2 boş sayfası bulunmalıdır.'],
+  ['Çocuklar','Reşit olmayanlar için tam doğum belgesi taşınması şiddetle önerilir.'],
+  ['Sağlık','Riskli bir ülkeden geliyorsanız sarıhumma sertifikası gerekir.']],
+  link:['İçişleri Bakanlığı','https://www.dha.gov.za/']},
+KEN:{tags:['eTA'],items:[
+  ['eTA','Çoğu ziyaretçinin seyahatten önce çevrimiçi Elektronik Seyahat İzni alması gerekir. Afrika ülkelerinin çoğunun vatandaşları muaftır.'],
+  ['Pasaport','En az 6 ay geçerli ve bir boş sayfalı olmalıdır.'],
+  ['Sağlık','Sarıhumma aşısı önerilir; riskli bir ülkeden geliyorsanız sertifika gerekir.']],
+  link:['Kenya eTA','https://www.etakenya.go.ke/']},
+TZA:{items:[['Vize','Çoğu ziyaretçi önceden e-Vize başvurusu yapar.'],['Sağlık','Riskli bir ülkeden geliyor veya aktarma yapıyorsanız sarıhumma sertifikası gerekir.'],['Pasaport','En az 6 ay geçerli olmalıdır.']],link:['Tanzanya e-Vize','https://visa.immigration.go.tz/']},
+RUS:{tags:['Birleşik e-Vize'],items:[
+  ['e-Vize','Yaklaşık 55 ülkenin vatandaşları 16 güne kadar kalışa izin veren birleşik e-Vizeye başvurabilir.'],
+  ['Diğerleri','Daha uzun veya farklı amaçlı seyahatler için davetiyeli konsolosluk vizesi gerekir.'],
+  ['Kayıt','Kalışınız 7 iş günü içinde kaydedilmelidir; oteller bunu sizin için yapar.'],
+  ['Para','Yurt dışında çıkarılmış Visa ve Mastercard kartlar Rusya\'da çalışmaz.'],
+  ['Uyarılar','Birçok hükümet Rusya\'ya her türlü seyahati önermiyor.']],
+  link:['Rusya e-Vize','https://evisa.kdmid.ru/']},
+GEO:{items:[['Vizesiz','Yaklaşık 95 ülkenin vatandaşları vizesiz bir yıla kadar kalabilir.'],['Sigorta','2026\'dan itibaren yabancı ziyaretçiler için seyahat sağlık sigortası zorunludur.'],['e-Vize','Diğerleri çevrimiçi başvurabilir.']],link:['Gürcistan e-Vize portalı','https://www.evisa.gov.ge/']},
+ISR:{tags:['ETA-IL'],items:[
+  ['ETA-IL','1 Ocak 2025\'ten beri vizeden muaf ülke vatandaşlarının seyahatten önce ETA-IL alması gerekir (25 ILS, 2 yıla kadar geçerli).'],
+  ['Pasaport','En az 6 ay geçerli olmalıdır.'],
+  ['Sınır','Pasaporta damga basılmaz; bunun yerine giriş kartı verilir.'],
+  ['Uyarılar','Plan yapmadan önce kendi hükümetinizin güncel seyahat uyarılarını kontrol edin.']],
+  link:['ETA-IL resmî sitesi','https://israel-entry.piba.gov.il/']},
+LKA:{tags:['ETA'],items:[['ETA','Çoğu ziyaretçinin seyahatten önce çevrimiçi ETA alması gerekir.'],['Pasaport','En az 6 ay geçerli olmalıdır.']],link:['Sri Lanka ETA','https://www.eta.gov.lk/']},
+KHM:{tags:['e-Varış'],items:[['Vize','Çevrimiçi turist e-Vizesi veya kapıda vize.'],['Varış','Varıştan önce Kamboçya e-Varış kartını doldurun.'],['Pasaport','En az 6 ay geçerli ve bir boş sayfalı olmalıdır.']],link:['Kamboçya e-Vize','https://www.evisa.gov.kh/']},
+NPL:{items:[['Vize','15, 30 veya 90 günlük kapıda vize; çevrimiçi ön doldurma yapılabilir.'],['Muaf olanlar','Hindistan vatandaşlarının vizeye ihtiyacı yoktur.'],['Pasaport','En az 6 ay geçerli olmalıdır.']],link:['Nepal Göç Dairesi','https://www.immigration.gov.np/']},
+MDV:{tags:['Ücretsiz 30 gün kapıda vize'],items:[['Vize','Tüm ülke vatandaşları, onaylı konaklama ve devam biletiyle ücretsiz 30 günlük kapıda vize alır.'],['Beyan','IMUGA yolcu beyanını varıştan önceki 96 saat içinde gönderin.'],['Gümrük','Alkol ve domuz eti getirilemez.']],link:['IMUGA','https://imuga.immigration.gov.mv/']},
+JOR:{items:[['Vize','Çoğu ziyaretçi kapıda vize alır.'],['Jordan Pass','Jordan Pass, en az 3 gece kalışlarda vize ücretini karşılar ve Petra girişini içerir.'],['Pasaport','En az 6 ay geçerli olmalıdır.']],link:['Jordan Pass','https://www.jordanpass.jo/']},
+AUS:{tags:['ETA / eVisitor'],items:[
+  ['İzin','Yeni Zelandalılar hariç her ziyaretçinin vize veya izne ihtiyacı vardır. Uygun pasaportlar AustralianETA uygulamasıyla ETA kullanır (20 AUD hizmet ücreti); AB ve bazı Avrupa pasaportları ücretsiz eVisitor kullanır.'],
+  ['Kalış süresi','Onaydan sonraki 12 ay içinde ziyaret başına 3 aya kadar.'],
+  ['Diğerleri','Ziyaretçi vizesine (alt sınıf 600) çevrimiçi başvurun.'],
+  ['Biyogüvenlik','Tüm gıda, bitki ve hayvansal ürünleri beyan edin. Cezalar ağırdır.']],
+  link:['İçişleri Bakanlığı','https://immi.homeaffairs.gov.au/']},
+NZL:{tags:['NZeTA + IVL'],items:[
+  ['NZeTA','Vize muafiyetli ziyaretçilerin NZeTA (uygulama ile 17 NZD) ve Uluslararası Ziyaretçi Koruma ve Turizm Vergisi (100 NZD) ödemesi gerekir.'],
+  ['Muaf olanlar','Avustralya vatandaşlarının ikisine de ihtiyacı yoktur.'],
+  ['Beyan','Varıştan önce NZ Yolcu Beyanını doldurun.'],
+  ['Biyogüvenlik','Gıda, doğa ekipmanı ve bitki veya hayvansal ürünleri beyan edin.']],
+  link:['Yeni Zelanda Göç İdaresi: NZeTA','https://www.immigration.govt.nz/new-zealand-visas/visas/visa/nzeta']},
+BTN:{items:[['Vize','Hindistan, Bangladeş ve Maldiv vatandaşları dışındaki tüm ziyaretçilerin önceden ayarlanmış vizeye ihtiyacı vardır.'],['SDF','Gecelik Sürdürülebilir Kalkınma Ücreti uygulanır (çoğu ziyaretçi için 100 USD).']],link:['Butan Turizm Dairesi','https://www.bhutan.travel/']}
+};
+SCH.forEach(c=>{if(!P_TR[c])P_TR[c]=schengenProfileTR});

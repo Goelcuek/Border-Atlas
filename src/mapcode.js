@@ -147,9 +147,9 @@ function onMove(){
   if(code!==hover){hover=code;schedule()}
   canvas.classList.toggle('hot',!!code);
   if(!h){tip.hidden=true;return}
-  if(!code){tip.innerHTML=`<b>${esc(h.slice(1))}</b><small>Territory, not in the dataset</small>`}
-  else if(code===sel){tip.innerHTML=`<b>${esc(name(code))}</b><small>Selected country</small>`}
-  else{const rr=relReq(code);tip.innerHTML=`<b>${esc(name(code))}</b><small>${mode==='out'?esc(name(sel))+' passport':esc(name(code))+' passport → '+esc(name(sel))}</small><div class="k"><i style="background:${col[rr.k]}"></i>${CAT[rr.k].label}${rr.days?' · '+rr.days+' days':''}</div>`}
+  if(!code){tip.innerHTML=`<b>${esc(h.slice(1))}</b><small>${t('territory')}</small>`}
+  else if(code===sel){tip.innerHTML=`<b>${esc(name(code))}</b><small>${t('selected')}</small>`}
+  else{const rr=relReq(code);tip.innerHTML=`<b>${esc(name(code))}</b><small>${mode==='out'?esc(t('passportOf',name(sel))):esc(t('passportOf',name(code)))+' → '+esc(name(sel))}</small><div class="k"><i style="background:${col[rr.k]}"></i>${CAT[rr.k].label}${rr.days?' · '+t('days',rr.days):''}</div>`}
   tip.hidden=false;
   const tw=tip.offsetWidth,th=tip.offsetHeight;
   tip.style.left=Math.min(x+14,cw-tw-6)+'px';tip.style.top=Math.min(y+14,ch-th-6)+'px';
@@ -167,8 +167,9 @@ function zoomTo(code){
   const os=low.filter(o=>o.code===code);let b;
   if(os.length){b=os.reduce((m,o)=>o.area>m.area?o:m).b}else if(anchors[code]){const a=anchors[code];b=[[a[0]-4,a[1]-4],[a[0]+4,a[1]+4]]}else return;
   const [x0,y0]=[ox+s0*b[0][0],oy+s0*b[0][1]],[x1,y1]=[ox+s0*b[1][0],oy+s0*b[1][1]];
-  const k=Math.max(1,Math.min(MAXK,.7/Math.max((x1-x0)/cw,(y1-y0)/ch)));
-  const t=d3.zoomIdentity.translate(cw/2,ch/2).scale(k).translate(-(x0+x1)/2,-(y0+y1)/2);
+  const ph=matchMedia('(max-width:720px)').matches,vh=ph?ch*.32:ch,cy=ph?ch*.3:ch/2;
+  const k=Math.max(1,Math.min(MAXK,.7/Math.max((x1-x0)/cw,(y1-y0)/vh)));
+  const t=d3.zoomIdentity.translate(cw/2,cy).scale(k).translate(-(x0+x1)/2,-(y0+y1)/2);
   csel.transition().duration(600).call(zoom.transform,t);
 }
 

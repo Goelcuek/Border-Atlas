@@ -160,6 +160,27 @@ dl.kv dd{margin:0;font-weight:500;min-width:0}
 .foot a{color:var(--muted)}
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:29;display:none}
 
+
+/* i18n toggle + richer popup */
+.lang{display:grid;grid-template-columns:1fr 1fr;border-radius:12px;overflow:hidden;margin-top:8px}
+.lang button{border:0;background:transparent;height:30px;width:20px;font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--muted);cursor:pointer;padding:0}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line2);border:1px solid var(--line2);border-radius:12px;overflow:hidden;margin:0}
+.facts div{background:var(--panel);padding:9px 12px;min-width:0}
+.facts dt{font-size:11px;color:var(--muted);margin-bottom:1px}
+.facts dd{margin:0;font-size:13.5px;font-weight:600;overflow-wrap:anywhere}
+.facts dd small{font-weight:400;color:var(--muted);font-size:12px}
+.facts .wide{grid-column:1/-1}
+.prep{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.prep li{display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:13.5px;align-items:start}
+.prep li::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--prep,var(--muted));margin:7px 0 0 4px}
+.nbs{display:flex;flex-wrap:wrap;gap:6px}
+.nb{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 10px 4px 8px;font-size:12.5px;cursor:pointer}
+.nb:hover{background:var(--line2)}
+.nb i{width:9px;height:9px;border-radius:2px;flex:none}
+.open{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-top:10px}
+.open .bar{flex:1}
+
 @media (max-width:720px){
   #tl{right:calc(64px + var(--sr));max-width:none}
   .bubble{width:100%;padding:5px 6px 5px 12px}
@@ -187,8 +208,8 @@ dl.kv dd{margin:0;font-weight:500;min-width:0}
       <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
     </button>
     <div class="dir" role="group" aria-label="Direction">
-      <button id="modeOut" aria-pressed="true" title="Where this passport can go">From</button>
-      <button id="modeIn" aria-pressed="false" title="Who can enter this country">To</button>
+      <button id="modeOut" aria-pressed="true">From</button>
+      <button id="modeIn" aria-pressed="false">To</button>
     </div>
   </div>
   <button class="chip card" id="infoBtn" aria-haspopup="dialog"></button>
@@ -196,6 +217,7 @@ dl.kv dd{margin:0;font-weight:500;min-width:0}
 
 <div class="float" id="tr">
   <div class="zoom card"><button id="zIn" aria-label="Zoom in">+</button><button id="zOut" aria-label="Zoom out">−</button><button id="zReset" aria-label="Reset view" style="font-size:14px">⌂</button></div>
+  <div class="lang card" role="group" aria-label="Language"><button id="lTR" lang="tr">TR</button><button id="lEN" lang="en">EN</button></div>
 </div>
 <div class="float card" id="legend" role="group" aria-label="Filter by requirement"></div>
 <div class="scale" id="scale">1×</div>
@@ -205,7 +227,7 @@ dl.kv dd{margin:0;font-weight:500;min-width:0}
 <div class="float card" id="pick" hidden role="dialog" aria-label="Choose a country">
   <div class="sh">
     <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.5"/></svg>
-    <input id="pickIn" type="search" autocomplete="off" spellcheck="false" placeholder="Search 199 countries" aria-controls="pickList">
+    <input id="pickIn" type="search" autocomplete="off" spellcheck="false" placeholder="" aria-controls="pickList">
     <button class="x" id="pickX" aria-label="Close">×</button>
   </div>
   <ul id="pickList" role="listbox"></ul>
@@ -224,171 +246,3 @@ dl.kv dd{margin:0;font-weight:500;min-width:0}
 
 <section class="float card pop" id="detail" hidden role="dialog" aria-label="Country detail"></section>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
-<script>/*DATA*/</script>
-<script>window.WORLD=/*WORLD*/;</script>
-<script>
-(function(){
-/*PRELUDE*/
-/*PROFILES*/
-/*HELPERS*/
-if(tab!=='overview'&&tab!=='list'&&tab!=='entry')tab='overview';
-try{const t=localStorage.getItem('ba.tab3');if(t)tab=t}catch(e){}
-/*MAPCODE*/
-
-/* =========================================================
-   FLOATING UI
-   ========================================================= */
-const isPhone=()=>matchMedia('(max-width:720px)').matches;
-const scrim=$('#scrim');
-function syncScrim(){scrim.classList.toggle('on',!$('#info').hidden||!$('#detail').hidden)}
-scrim.onclick=()=>{closeInfo();closeDetail()};
-
-/* ---------- picker ---------- */
-const pick=$('#pick'),pin=$('#pickIn'),plist=$('#pickList');
-const sorted=[...V.countries].sort((a,b)=>a.n.localeCompare(b.n));
-let active=0,shown=[];
-function renderPick(f){
-  const t=(f||'').toLowerCase().trim();
-  shown=sorted.filter(c=>!t||c.n.toLowerCase().includes(t)||c.c.toLowerCase()===t||(c.o||'').toLowerCase().includes(t));
-  active=Math.max(0,t?0:shown.findIndex(c=>c.c===sel));
-  plist.innerHTML=shown.map((c,i)=>`<li role="option" data-c="${c.c}" aria-selected="${i===active}">${iso(c.c)}${esc(c.n)}<small>${esc(c.r)}</small></li>`).join('')||'<li class="empty">No country matches</li>';
-}
-function openPick(){closeInfo();closeDetail();pick.hidden=false;pin.value='';renderPick('');const a=plist.children[active];if(a)a.scrollIntoView({block:'center'});if(!isPhone())pin.focus();else setTimeout(()=>pin.focus(),50)}
-function closePick(){pick.hidden=true}
-$('#who').onclick=openPick;$('#pickX').onclick=closePick;
-pin.addEventListener('input',()=>renderPick(pin.value));
-pin.addEventListener('keydown',e=>{
-  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!shown.length)return;active=(active+(e.key==='ArrowDown'?1:-1)+shown.length)%shown.length;[...plist.children].forEach((li,i)=>li.setAttribute('aria-selected',i===active));plist.children[active].scrollIntoView({block:'nearest'})}
-  else if(e.key==='Enter'){e.preventDefault();if(shown[active])choose(shown[active].c)}
-  else if(e.key==='Escape')closePick();
-});
-plist.addEventListener('click',e=>{const li=e.target.closest('li[data-c]');if(li)choose(li.dataset.c)});
-document.addEventListener('pointerdown',e=>{if(!pick.hidden&&!pick.contains(e.target)&&!e.target.closest('#who'))closePick()});
-function choose(c){sel=c;filter=null;q='';focus=null;closePick();closeDetail();save();renderAll();zoomTo(c)}
-
-/* ---------- direction ---------- */
-function setMode(m){mode=m;filter=null;save();renderAll();if(!$('#detail').hidden&&focus&&focus!==sel)openDetail(focus)}
-$('#modeOut').onclick=()=>setMode('out');$('#modeIn').onclick=()=>setMode('in');
-
-/* ---------- legend ---------- */
-function renderLegend(){
-  const s=stats(sel,mode),L=$('#legend');
-  L.className='float card'+(filter?' filtering':'');
-  L.innerHTML=ORDER.filter(k=>s[k]).map(k=>`<button data-k="${k}" aria-pressed="${filter===k}" title="${CAT[k].label}"><i style="background:var(${CAT[k].color})"></i>${CAT[k].short||CAT[k].label}<b>${s[k]}</b></button>`).join('');
-  L.querySelectorAll('button').forEach(b=>b.onclick=()=>{filter=filter===b.dataset.k?null:b.dataset.k;renderLegend();schedule();if(!$('#info').hidden&&tab==='list')renderInfo()});
-}
-CAT.F.short='Visa-free';CAT.T.short='eTA';CAT.A.short='On arrival';CAT.E.short='e-Visa';CAT.V.short='Visa required';CAT.X.short='No entry';
-
-/* ---------- info chip + popup ---------- */
-function barHTML(s,cls){const t=ORDER.reduce((a,k)=>a+s[k],0)||1;return`<div class="${cls||'bar'}">${ORDER.map(k=>s[k]?`<span style="width:${(s[k]/t*100).toFixed(2)}%;background:var(${CAT[k].color})"></span>`:'').join('')}</div>`}
-function renderChip(){
-  const s=stats(sel,mode);
-  $('#infoBtn').innerHTML=`${barHTML(s,'mini')}<span>${mode==='out'?`<b>${MOB[sel]}</b> countries without a visa`:`<b>${OPEN[sel]}</b> nationalities admitted`}</span><span class="more">Details</span>`;
-}
-$('#infoBtn').onclick=()=>{if($('#info').hidden)openInfo();else closeInfo()};
-function openInfo(t){if(t)tab=t;closePick();if(isPhone())closeDetail();$('#info').hidden=false;renderInfo();syncScrim()}
-function closeInfo(){$('#info').hidden=true;syncScrim()}
-$('#infoX').onclick=closeInfo;
-document.querySelectorAll('#info .tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;save();try{localStorage.setItem('ba.tab3',tab)}catch(e){}renderInfo();$('#infoBody').scrollTop=0});
-
-function renderInfo(){
-  if($('#info').hidden)return;
-  const m=META[sel];
-  $('#infoTitle').textContent=m.n;
-  $('#infoSub').innerHTML=`${iso(sel)}${esc([m.sr||m.r,m.cap].filter(Boolean).join(' · '))}`;
-  $('#t-list').textContent=mode==='out'?'Destinations':'Nationalities';
-  $('#t-entry').textContent='Entering '+m.n;
-  document.querySelectorAll('#info .tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===tab));
-  const body=$('#infoBody');
-  if(tab==='overview')body.innerHTML=overviewHTML();
-  else if(tab==='entry')body.innerHTML=entryHTML(sel,true);
-  else{body.innerHTML=listHTML();bindList()}
-}
-function overviewHTML(){
-  const s=stats(sel,mode),t=N-1;
-  const lede=mode==='out'
-    ?`Citizens can enter <b>${MOB[sel]}</b> of ${t} countries without arranging a visa first.`
-    :`<b>${OPEN[sel]}</b> of ${t} nationalities can enter without arranging a visa first.`;
-  const regs=REGIONS.map(r=>{const st={F:0,T:0,A:0,E:0,V:0,X:0};let n=0,ok=0;CODES.forEach(c=>{if(c===sel||META[c].r!==r)return;const k=relReq(c).k;st[k]++;n++;if('FTA'.includes(k))ok++});return`<tr><td>${r}</td><td>${barHTML(st)}</td><td>${ok}/${n}</td></tr>`}).join('');
-  return`<p class="lede">${lede}</p>
-   <div class="figs"><div><b>${MOB[sel]}</b><span>Visa-free reach</span></div><div><b>${ordinalPassports(sel)}<small style="font-size:12px;color:var(--muted);font-weight:500"> / ${N}</small></b><span>Passport rank</span></div><div><b>${OPEN[sel]}</b><span>Nationalities admitted</span></div></div>
-   <h3 class="lbl">${mode==='out'?'Requirement by destination':'Requirement by nationality'}</h3>${barHTML(s)}
-   <ul class="leg">${ORDER.filter(k=>s[k]).map(k=>`<li><i style="background:var(${CAT[k].color})"></i><span>${CAT[k].label}</span><span class="n">${s[k]}</span><span class="p">${Math.round(s[k]/t*100)}%</span></li>`).join('')}</ul>
-   <h3 class="lbl">By region · no visa needed in advance</h3><table class="reg">${regs}</table>
-   <div class="foot">${FOOT}</div>`;
-}
-function listHTML(){
-  const groups=ORDER.map(k=>({k,items:CODES.filter(c=>c!==sel&&relReq(c).k===k&&(!q||name(c).toLowerCase().includes(q))).sort((a,b)=>name(a).localeCompare(name(b)))})).filter(g=>g.items.length&&(!filter||g.k===filter));
-  return`<input class="filter" id="q" type="search" placeholder="Filter ${mode==='out'?'destinations':'nationalities'}" value="${esc(q)}" aria-label="Filter list">
-   ${filter?`<p class="generic" style="margin:4px 0 0">Showing ${CAT[filter].label.toLowerCase()} only. Tap the category in the legend again to show all.</p>`:''}
-   ${groups.length?groups.map(g=>`<div class="grp"><h4><i style="background:var(${CAT[g.k].color})"></i>${CAT[g.k].label}<span>${g.items.length}</span></h4>${g.items.map(c=>{const r=relReq(c);return`<button class="row${c===focus?' on':''}" data-c="${c}">${iso(c)}<span class="nm">${esc(name(c))}</span><span class="d">${stay(r)}</span></button>`}).join('')}</div>`).join(''):'<p class="empty">No countries match.</p>'}`;
-}
-function bindList(){
-  const qi=$('#q');
-  qi.oninput=()=>{q=qi.value.toLowerCase().trim();const p=qi.selectionStart;renderInfo();const n=$('#q');n.focus();n.setSelectionRange(p,p)};
-  document.querySelectorAll('#infoBody .row').forEach(b=>b.onclick=()=>{const c=b.dataset.c;if(isPhone())closeInfo();openDetail(c);zoomTo(c)});
-}
-function genericProfile(c){
-  const si=stats(c,'in'),m=META[c];
-  const dom=ORDER.reduce((a,k)=>si[k]>si[a]?k:a,'F');
-  const items=[['Most visitors',`${CAT[dom].label}: applies to ${si[dom]} of ${N-1} nationalities.`],
-    ['Passport','Carry a passport valid at least 6 months beyond arrival with a blank page. Airlines often enforce this even where the law is looser.'],
-    ['Proof','Expect to show a return or onward ticket, where you are staying, and enough money for the trip.']];
-  if(si.A)items.push(['Visa on arrival',`Available to ${si.A} nationalities. Carry US dollars or euros in cash and spare passport photos in case cards are not accepted.`]);
-  if(si.E)items.push(['e-Visa',`Available to ${si.E} nationalities. Apply on the government portal and avoid look-alike agency sites.`]);
-  if(m.r==='Africa'||m.sr==='South America')items.push(['Health','A yellow fever certificate may be required, especially if you arrive from or transit through a risk country.']);
-  return{items,generic:true};
-}
-function entryHTML(c,full){
-  const m=META[c],p=P[c]||genericProfile(c);
-  const link=p.link||['IATA Travel Centre','https://www.iatatravelcentre.com/'];
-  return`${full?`<dl class="kv"><dt>Currency</dt><dd>${esc(m.cur.join(', ')||'—')}</dd><dt>Languages</dt><dd>${esc(m.lang.join(', ')||'—')}</dd><dt>Dialling code</dt><dd>${esc(m.idd||'—')}</dd><dt>Admits</dt><dd>${OPEN[c]} of ${N-1} nationalities without a prior visa</dd></dl>`:''}
-   ${(p.tags||[]).length?`<div class="tags">${p.tags.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}
-   <dl class="rules">${p.items.map(([a,b])=>`<div><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join('')}</dl>
-   ${p.generic?'<p class="generic">General guidance derived from the visa data. Confirm details with the official source.</p>':''}
-   <a class="src" href="${link[1]}" target="_blank" rel="noopener">${esc(link[0])} ↗</a>`;
-}
-
-/* ---------- detail popup ---------- */
-const detail=$('#detail');
-const EUs=['AUT','BEL','BGR','HRV','CYP','CZE','DNK','EST','FIN','FRA','DEU','GRC','HUN','IRL','ITA','LVA','LTU','LUX','MLT','NLD','POL','PRT','ROU','SVK','SVN','ESP','SWE'];
-function openDetail(c){
-  closePick();if(isPhone())closeInfo();
-  focus=c;schedule();
-  if(c===sel){openInfo('overview');return}
-  const from=mode==='out'?sel:c,to=mode==='out'?c:sel;
-  const r=req(from,to),back=req(to,from);
-  let sub=CAT[r.k].desc;
-  if(r.k==='F'&&r.days)sub=`Stay up to ${r.days} days without a visa.`+(SCH.includes(to)&&!EUs.includes(from)?' Schengen days count across all member states.':'');
-  if(r.k==='F'&&!r.days)sub=EUs.includes(from)&&(EUs.includes(to)||SCH.includes(to))?'Freedom of movement. A national ID card is usually enough.':'No visa and no fixed limit for visits.';
-  detail.innerHTML=`<div class="grab"></div><div class="ph"><div><h2>${esc(name(c))}</h2><small>${iso(from)}${esc(name(from))} passport → ${esc(name(to))}</small></div><button class="x" id="dx" aria-label="Close">×</button></div>
-   <div class="pb" style="padding-top:4px">
-     <div class="verdict"><i style="background:var(${CAT[r.k].color})"></i><div><b>${CAT[r.k].label}${r.days?' · '+r.days+' days':''}</b><span>${esc(sub)}</span></div></div>
-     <h3 class="lbl">Reverse direction</h3><div class="back"><i style="background:var(${CAT[back.k].color})"></i>${esc(name(to))} passport → ${esc(name(from))}: <b>${CAT[back.k].label}${back.days?' · '+back.days+' d':''}</b>${back.k===r.k?'<span style="color:var(--faint)">(reciprocal)</span>':''}</div>
-     <h3 class="lbl">Entering ${esc(name(to))}</h3>
-     ${entryHTML(to,false)}
-     <div><button class="btn" id="mk">Select ${esc(name(c))}</button></div>
-   </div>`;
-  detail.hidden=false;syncScrim();
-  const pb=detail.querySelector('.pb');if(pb)pb.scrollTop=0;
-  $('#dx').onclick=closeDetail;$('#mk').onclick=()=>choose(c);
-  document.querySelectorAll('.row').forEach(b=>b.classList.toggle('on',b.dataset.c===c));
-}
-function closeDetail(){if(detail.hidden)return;detail.hidden=true;focus=null;schedule();syncScrim();document.querySelectorAll('.row.on').forEach(b=>b.classList.remove('on'))}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!pick.hidden)closePick();else if(!detail.hidden)closeDetail();else closeInfo()}});
-
-const FOOT=`<div>Visa matrix from the <a href="https://github.com/ilyankou/passport-index-dataset" target="_blank" rel="noopener">Passport Index open dataset</a> (January 2025), corrected for: UK ETA for all visa-exempt visitors, Israel ETA-IL, Brazil visas for US/Canadian/Australian citizens, and China's 30-day visa-free list (incl. UK, Canada, Russia). Reviewed October 2026.</div><div>Covers ordinary passports on short tourist visits. Rules change often; confirm with the official source or your airline before travelling.</div><div>Borders: Natural Earth. Disputed areas are shown as in the source and imply no position.</div>`;
-
-function renderAll(){
-  $('#modeOut').setAttribute('aria-pressed',mode==='out');$('#modeIn').setAttribute('aria-pressed',mode==='in');
-  $('#whoCode').textContent=sel;$('#whoName').textContent=name(sel);
-  renderChip();renderLegend();renderInfo();schedule();
-}
-renderAll();updScale();
-resize();if(isPhone()&&anchors[sel]){const a=anchors[sel],k=2.4;csel.call(zoom.transform,d3.zoomIdentity.translate(cw/2,ch*.42).scale(k).translate(-(ox+s0*a[0]),-(oy+s0*a[1])))}
-setTimeout(()=>{(window.requestIdleCallback||setTimeout)(loadHigh)},1200);
-if(document.fonts)document.fonts.ready.then(()=>{WCACHE.clear();schedule()});
-})();
-</script>
