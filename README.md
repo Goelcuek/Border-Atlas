@@ -5,8 +5,10 @@ Interactive world map of visa and entry requirements. Pick a passport to see eve
 **Live site:** https://goelcuek.github.io/Border-Atlas/
 
 ## Files
-- `index.html` – the complete site in one file (data and map geometry embedded; d3 and topojson load from cdnjs).
-- `src/template.html` – page source with `/*DATA*/` and `/*WORLD*/` placeholders.
+- `index.html` – the complete site in one file (data and 50m map geometry embedded; d3 and topojson load from cdnjs).
+- `world-10m.json` – high-resolution borders, loaded in the background and used when zoomed in.
+- `src/template.html`, `src/profiles.js` – page source and per-country entry rules.
+- `scripts/assemble.py` – combines the source files into `index.html`.
 - `scripts/build_data.py` – builds the visa matrix from the Passport Index dataset and applies the 2025–2026 policy updates.
 
 ## Data

@@ -2,232 +2,205 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a passport "data page" header over a full-width map, then a two-column dossier (your passport | entering the selected country) with a detail sheet for any clicked border. */
+/* Layout: map-first app shell. A dense control sidebar on the left (stacked below the map on phones), the canvas map filling the rest, with a docked detail panel for the clicked country. Palette borrows from printed political atlases. */
 :root{
-  --bg:#eef1f5; --paper:#f8f9fb; --panel:#ffffff; --ink:#15202e; --muted:#5b6778; --line:#d6dce5; --soft:#e5e9f0;
-  --accent:#1f4fbf; --accent-ink:#ffffff; --ocean:#e3e9f1; --nodata:#c9cfd8; --land-stroke:#ffffff;
-  --c-free:#1c9a6b; --c-eta:#86bf4a; --c-voa:#e6b33e; --c-evisa:#ee8636; --c-req:#d4415a; --c-no:#4b3a52; --c-self:#1f4fbf;
-  --font-display:"Unbounded","Arial Black",system-ui,sans-serif;
-  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --font-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
-  --r:10px;
+  --bg:#f4f6f7; --panel:#ffffff; --ink:#1b232b; --muted:#5f6b75; --faint:#8a949c; --line:#dde2e6; --line2:#eef1f3;
+  --ocean:#dbe5ec; --grat:#c9d6df; --border:#ffffff; --nodata:#cfd4d8; --halo:rgba(255,255,255,.85); --label:#1b232b;
+  --accent:#1c4f9c; --accent-ink:#ffffff;
+  --c-free:#2f7d5b; --c-eta:#8db36b; --c-voa:#e1b54a; --c-evisa:#d6803f; --c-req:#b4473b; --c-no:#3f2f3d; --c-self:#1c4f9c;
+  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0e141c; --paper:#121a24; --panel:#17212d; --ink:#e6ebf2; --muted:#93a0b2; --line:#283444; --soft:#1e2a38;
-  --accent:#6e9bff; --accent-ink:#0b1220; --ocean:#101924; --nodata:#2f3a48; --land-stroke:#0e141c;
-  --c-free:#2fb582; --c-eta:#93c95a; --c-voa:#e8bb4f; --c-evisa:#f0924a; --c-req:#e45b72; --c-no:#8b6f97; --c-self:#6e9bff; color-scheme:dark}}
+  --bg:#101519; --panel:#151b20; --ink:#e3e8ec; --muted:#97a2ab; --faint:#6d7881; --line:#25303a; --line2:#1c242b;
+  --ocean:#0c1820; --grat:#16262f; --border:#0c1820; --nodata:#2a333b; --halo:rgba(12,24,32,.85); --label:#e3e8ec;
+  --accent:#7aa5e8; --accent-ink:#0c1520;
+  --c-free:#3f9a72; --c-eta:#9cc27a; --c-voa:#e3bc58; --c-evisa:#df8d4d; --c-req:#cf5a4d; --c-no:#7d6478; --c-self:#7aa5e8; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0e141c; --paper:#121a24; --panel:#17212d; --ink:#e6ebf2; --muted:#93a0b2; --line:#283444; --soft:#1e2a38;
-  --accent:#6e9bff; --accent-ink:#0b1220; --ocean:#101924; --nodata:#2f3a48; --land-stroke:#0e141c;
-  --c-free:#2fb582; --c-eta:#93c95a; --c-voa:#e8bb4f; --c-evisa:#f0924a; --c-req:#e45b72; --c-no:#8b6f97; --c-self:#6e9bff; color-scheme:dark}
+  --bg:#101519; --panel:#151b20; --ink:#e3e8ec; --muted:#97a2ab; --faint:#6d7881; --line:#25303a; --line2:#1c242b;
+  --ocean:#0c1820; --grat:#16262f; --border:#0c1820; --nodata:#2a333b; --halo:rgba(12,24,32,.85); --label:#e3e8ec;
+  --accent:#7aa5e8; --accent-ink:#0c1520;
+  --c-free:#3f9a72; --c-eta:#9cc27a; --c-voa:#e3bc58; --c-evisa:#df8d4d; --c-req:#cf5a4d; --c-no:#7d6478; --c-self:#7aa5e8; color-scheme:dark}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
-.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow:hidden}
 button,input{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.mono{font-family:var(--font-mono)}
-.tab{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.num{font-variant-numeric:tabular-nums}
+.iso{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);border:1px solid var(--line);padding:0 4px;border-radius:2px;line-height:16px;display:inline-block;min-width:34px;text-align:center}
 
-/* Header */
-header.top{background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
-header.top .wrap{display:flex;align-items:center;gap:14px 20px;flex-wrap:wrap;padding-block:12px}
-.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
-.brand svg{flex:none}
-.brand h1{font-family:var(--font-display);font-size:17px;font-weight:700;letter-spacing:.01em;margin:0}
-.brand small{display:block;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.app{display:grid;grid-template-columns:392px minmax(0,1fr);height:100%}
+/* Sidebar */
+#side{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;min-width:0;
+  padding-left:env(safe-area-inset-left,0px)}
+.sec{padding:16px 20px;border-bottom:1px solid var(--line)}
+.sec h2{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.head{position:sticky;top:0;background:var(--panel);z-index:5;padding-block:14px 14px}
+.wordmark{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px}
+.wordmark b{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.wordmark span{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
 
-.picker{position:relative;min-width:0;flex:1 1 300px;max-width:420px}
-.picker label{position:absolute;left:12px;top:6px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-mono);pointer-events:none}
-.picker input{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:20px 40px 7px 12px;font-size:15px;font-weight:500}
-.picker .chev{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted)}
-.picker ul{position:absolute;left:0;right:0;top:calc(100% + 6px);max-height:min(60vh,420px);overflow:auto;margin:0;padding:6px;list-style:none;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 12px 40px rgba(10,20,40,.18);z-index:40}
-.picker li{display:flex;gap:10px;align-items:center;padding:7px 10px;border-radius:7px;cursor:pointer}
-.picker li[aria-selected="true"],.picker li:hover{background:var(--soft)}
-.picker li .iso{margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--muted)}
-.flag{font-size:1.15em;line-height:1}
+.picker{position:relative}
+.picker input{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:3px;padding:9px 34px 9px 54px;font-size:15px;font-weight:600}
+.picker .code{position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none}
+.picker .chev{position:absolute;right:11px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted)}
+.picker ul{position:absolute;left:0;right:0;top:calc(100% + 4px);max-height:min(56vh,380px);overflow:auto;margin:0;padding:4px 0;list-style:none;background:var(--panel);border:1px solid var(--line);border-radius:3px;box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:30}
+.picker li{display:flex;gap:10px;align-items:center;padding:6px 10px;cursor:pointer;font-size:14px}
+.picker li[aria-selected="true"],.picker li:hover{background:var(--line2)}
+.picker li small{margin-left:auto;color:var(--faint);font-size:12px}
 
-.seg{display:inline-flex;background:var(--soft);border-radius:999px;padding:3px;border:1px solid var(--line)}
-.seg button{border:0;background:transparent;padding:7px 14px;border-radius:999px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--muted);white-space:nowrap}
-.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg{display:grid;grid-template-columns:1fr 1fr;margin-top:8px;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:7px 8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 
-/* Passport data strip */
-.datapage{display:grid;grid-template-columns:auto 1fr auto;gap:18px 24px;align-items:center;padding-block:22px 16px}
-.bigflag{font-size:56px;line-height:1;width:76px;height:76px;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px}
-.dp-main{min-width:0}
-.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.dp-main h2{font-family:var(--font-display);font-weight:700;font-size:clamp(24px,3.4vw,40px);line-height:1.1;margin:4px 0 6px;text-wrap:balance}
-.dp-main p{margin:0;color:var(--muted);max-width:70ch}
-.mrz{grid-column:1/-1;font-family:var(--font-mono);font-size:clamp(10px,1.35vw,14px);letter-spacing:.18em;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:8px;padding:8px 12px;overflow:hidden;white-space:nowrap;text-overflow:clip}
-.score{display:flex;gap:22px;flex-wrap:wrap}
-.score div{min-width:92px}
-.score b{display:block;font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
-.score span{font-size:12px;color:var(--muted)}
+.title{font-size:24px;font-weight:700;letter-spacing:-.015em;line-height:1.15;margin:0 0 4px;text-wrap:balance}
+.lede{margin:0;color:var(--muted);font-size:13.5px}
+.figs{display:grid;grid-template-columns:repeat(3,1fr);margin-top:14px;border-top:1px solid var(--line2)}
+.figs div{padding-top:10px}
+.figs div+div{padding-left:12px;border-left:1px solid var(--line2)}
+.figs b{display:block;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.figs span{font-size:11.5px;color:var(--muted)}
+
+.bar{display:flex;height:8px;background:var(--line2);margin:2px 0 12px}
+.bar span{height:100%}
+.leg{display:grid;gap:1px;margin:0;padding:0;list-style:none}
+.leg button{display:grid;grid-template-columns:12px 1fr 34px 40px;gap:10px;align-items:center;width:100%;border:0;background:transparent;padding:5px 6px;margin:0 -6px;width:calc(100% + 12px);cursor:pointer;text-align:left;border-radius:2px;font-size:13.5px}
+.leg button:hover{background:var(--line2)}
+.leg button[aria-pressed="true"]{background:var(--line2);font-weight:600}
+.leg.filtering button[aria-pressed="false"]{color:var(--faint)}
+.leg i{width:12px;height:12px;display:block}
+.leg .n{text-align:right;font-variant-numeric:tabular-nums}
+.leg .p{text-align:right;color:var(--faint);font-variant-numeric:tabular-nums;font-size:12.5px}
+.note{font-size:12px;color:var(--faint);margin:8px 0 0}
+
+table.reg{width:100%;border-collapse:collapse;font-size:13px}
+table.reg td{padding:4px 0}
+table.reg td:first-child{width:76px}
+table.reg td:last-child{width:54px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;font-size:12.5px}
+table.reg .bar{margin:0;height:7px}
+
+.tabs{display:flex;border-bottom:1px solid var(--line);position:sticky;top:var(--headH,0px);background:var(--panel);z-index:4}
+.tabs button{flex:1;border:0;background:transparent;padding:11px 8px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+
+.filter{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:3px;padding:7px 10px;margin-bottom:6px}
+.grp h3{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;display:flex;align-items:center;gap:8px}
+.grp h3 i{width:10px;height:10px}
+.grp h3 span{margin-left:auto;font-variant-numeric:tabular-nums}
+.rows{display:grid}
+.row{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;border:0;background:transparent;padding:5px 6px;margin:0 -6px;cursor:pointer;text-align:left;border-radius:2px;min-width:0;font-size:13.5px}
+.row:hover,.row.on{background:var(--line2)}
+.row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.row .d{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12.5px;white-space:nowrap}
+.empty{color:var(--muted);padding:10px 0}
+
+dl.kv{display:grid;grid-template-columns:96px 1fr;gap:6px 12px;margin:0 0 4px;font-size:13.5px}
+dl.kv dt{color:var(--muted)}
+dl.kv dd{margin:0;font-weight:500;min-width:0}
+.rules{margin:12px 0 0}
+.rules div{padding:10px 0;border-top:1px solid var(--line2)}
+.rules dt{font-weight:600;font-size:13.5px;margin-bottom:2px}
+.rules dd{margin:0;font-size:13.5px;color:var(--ink);opacity:.9}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}
+.tags span{font-size:11.5px;border:1px solid var(--line);padding:1px 6px;border-radius:2px;color:var(--muted)}
+.src{display:inline-flex;align-items:center;gap:6px;margin-top:12px;color:var(--accent);font-weight:600;text-decoration:none;font-size:13.5px}
+.src:hover{text-decoration:underline}
+.generic{font-size:12.5px;color:var(--faint);margin:8px 0 0}
+
+.foot{padding:16px 20px calc(20px + env(safe-area-inset-bottom,0px));font-size:11.5px;color:var(--faint);display:grid;gap:6px;margin-top:auto}
+.foot a{color:var(--muted)}
 
 /* Map */
-.mapcard{position:relative;background:var(--ocean);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-#map{display:block;width:100%;height:clamp(300px,52vw,620px);cursor:grab;touch-action:none}
-#map:active{cursor:grabbing}
-#map path.c{stroke:var(--land-stroke);stroke-width:.5;vector-effect:non-scaling-stroke;transition:fill .35s ease,opacity .25s}
-#map circle.c{stroke:var(--land-stroke);stroke-width:1;vector-effect:non-scaling-stroke;transition:fill .35s ease,opacity .25s}
-#map .c{cursor:pointer;fill:var(--nodata)}
-#map .c:hover{stroke:var(--ink);stroke-width:1.4}
-#map .c.focus{stroke:var(--ink);stroke-width:2}
-.k-F{fill:var(--c-free)!important}.k-T{fill:var(--c-eta)!important}.k-A{fill:var(--c-voa)!important}.k-E{fill:var(--c-evisa)!important}.k-V{fill:var(--c-req)!important}.k-X{fill:var(--c-no)!important}.k-S{fill:var(--c-self)!important}
-#map .dim{opacity:.18}
-.mapbar{position:absolute;left:12px;right:12px;top:12px;display:flex;justify-content:space-between;gap:10px;pointer-events:none;flex-wrap:wrap}
-.mapbar>*{pointer-events:auto}
-.maptitle{background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:500;max-width:100%}
-.zoom{display:flex;flex-direction:column;gap:6px;position:absolute;right:12px;bottom:12px}
-.zoom button{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:18px;line-height:1;display:grid;place-items:center}
-.legend{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 0}
-.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px 6px 8px;cursor:pointer;font-size:13px}
-.chip i{width:14px;height:14px;border-radius:4px;display:inline-block}
-.chip b{font-variant-numeric:tabular-nums;font-weight:600}
-.chip[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
-.chip.off{opacity:.45}
-.hint{font-size:12.5px;color:var(--muted);margin-left:auto;align-self:center}
-.tip{position:fixed;z-index:60;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 11px;box-shadow:0 10px 30px rgba(10,20,40,.2);font-size:13px;max-width:260px}
-.tip strong{display:block;font-weight:600}
-.tip .pill{margin-top:4px}
+#mapwrap{position:relative;min-width:0;background:var(--ocean);overflow:hidden;touch-action:none}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+#map.drag{cursor:grabbing}
+#map.hot{cursor:pointer}
+.mtitle{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:12px;right:64px;pointer-events:none;font-size:13px;color:var(--ink)}
+.mtitle span{background:var(--panel);border:1px solid var(--line);padding:5px 9px;border-radius:2px;display:inline-block;max-width:100%}
+.zoom{position:absolute;right:calc(12px + env(safe-area-inset-right,0px));top:calc(12px + env(safe-area-inset-top,0px));display:grid;border:1px solid var(--line);background:var(--panel);border-radius:3px;overflow:hidden}
+.zoom button{width:34px;height:34px;border:0;background:transparent;cursor:pointer;font-size:17px;line-height:1;color:var(--ink)}
+.zoom button+button{border-top:1px solid var(--line)}
+.zoom button:hover{background:var(--line2)}
+.zoom button:disabled{color:var(--faint);cursor:default}
+.scale{position:absolute;left:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));font-family:var(--mono);font-size:10.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);padding:2px 6px;border-radius:2px;pointer-events:none}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);padding:7px 9px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.12);border-radius:2px;max-width:240px;z-index:6}
+.tip b{display:block;font-size:13.5px}
+.tip .k{display:flex;gap:6px;align-items:center;margin-top:3px}
+.tip .k i{width:9px;height:9px;display:block}
+.tip small{color:var(--muted);display:block}
 
-/* Pills */
-.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px 2px 8px;font-size:12.5px;font-weight:600;white-space:nowrap;background:var(--soft)}
-.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
-.p-F{color:var(--c-free)}.p-T{color:var(--c-eta)}.p-A{color:var(--c-voa)}.p-E{color:var(--c-evisa)}.p-V{color:var(--c-req)}.p-X{color:var(--c-no)}.p-S{color:var(--c-self)}
+#detail{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:calc(58px + env(safe-area-inset-right,0px));width:340px;max-height:calc(100% - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:3px;box-shadow:0 10px 30px rgba(0,0,0,.16);z-index:8;overscroll-behavior:contain}
+#detail .dh{display:flex;gap:10px;align-items:flex-start;padding:14px 16px 10px;border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--panel)}
+#detail .dh h3{margin:0;font-size:17px;font-weight:700;line-height:1.2}
+#detail .dh small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+#detail .x{margin-left:auto;border:1px solid var(--line);background:var(--panel);width:30px;height:30px;border-radius:3px;cursor:pointer;flex:none;font-size:16px;line-height:1}
+#detail .db{padding:12px 16px 16px}
+.verdict{display:flex;gap:12px;align-items:center;padding:10px 0 12px}
+.verdict i{width:30px;height:30px;flex:none;display:block}
+.verdict b{display:block;font-size:16px;line-height:1.2}
+.verdict span{font-size:12.5px;color:var(--muted)}
+.dsub{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.back{display:flex;align-items:center;gap:8px;font-size:13.5px;flex-wrap:wrap}
+.back i{width:10px;height:10px;display:block}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:7px 10px;cursor:pointer;font-weight:500;font-size:13px;margin-top:14px}
+.btn:hover{background:var(--line2)}
+.scrim{display:none}
 
-/* Dossier grid */
-.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;padding-block:22px 40px;align-items:start}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;min-width:0}
-.card+.card{margin-top:20px}
-.card h3{font-family:var(--font-display);font-weight:500;font-size:17px;margin:0 0 4px;text-wrap:balance}
-.card .sub{color:var(--muted);font-size:13.5px;margin:0 0 16px}
-.stack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--soft)}
-.stack span{display:block;height:100%}
-.regions{display:grid;gap:10px;margin-top:6px}
-.reg{display:grid;grid-template-columns:96px 1fr 64px;gap:12px;align-items:center;font-size:13.5px}
-.reg .n{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;font-size:12.5px}
-
-.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
-.tools input{flex:1 1 180px;min-width:0;border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:8px 12px}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.tabs button{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:5px 10px;font-size:12.5px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
-.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
-.tabs button i{width:9px;height:9px;border-radius:50%}
-.list{max-height:520px;overflow:auto;margin:0 -6px;padding:0 6px}
-.group h4{position:sticky;top:0;background:var(--panel);margin:0;padding:10px 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:var(--font-mono);display:flex;gap:8px;align-items:center;z-index:1}
-.group h4 i{width:10px;height:10px;border-radius:3px}
-.rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 12px}
-.row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;cursor:pointer;border:0;background:transparent;text-align:left;width:100%;min-width:0}
-.row:hover{background:var(--soft)}
-.row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.row .d{margin-left:auto;font-family:var(--font-mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
-.empty{color:var(--muted);font-size:14px;padding:12px 0}
-
-/* Entry profile */
-.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px 16px;margin:4px 0 18px;padding:14px;background:var(--paper);border:1px solid var(--soft);border-radius:10px}
-.facts dt{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.facts dd{margin:2px 0 0;font-size:14px;font-weight:500}
-.reqs{display:grid;gap:0;margin:0}
-.reqs>div{display:grid;grid-template-columns:118px 1fr;gap:12px;padding:11px 0;border-top:1px solid var(--soft)}
-.reqs>div:first-child{border-top:0}
-.reqs dt{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
-.reqs dd{margin:0;font-size:14.5px}
-.official{display:inline-flex;gap:8px;align-items:center;margin-top:14px;padding:9px 14px;border-radius:9px;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:600;font-size:14px}
-.tag{font-family:var(--font-mono);font-size:11px;padding:2px 7px;border-radius:5px;background:var(--soft);color:var(--muted);letter-spacing:.06em}
-.openbar{margin:4px 0 16px}
-.openbar .lbl{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
-
-/* Sheet */
-.scrim{position:fixed;inset:0;background:rgba(8,14,24,.35);z-index:70}
-.sheet{position:fixed;z-index:80;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--panel);border-left:1px solid var(--line);box-shadow:-20px 0 60px rgba(10,20,40,.25);display:flex;flex-direction:column;
-  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px);animation:slide .28s ease}
-@keyframes slide{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
-.sheet header{display:flex;align-items:flex-start;gap:12px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
-.sheet header h3{font-family:var(--font-display);font-weight:700;font-size:20px;margin:2px 0 0;line-height:1.2}
-.sheet .x{margin-left:auto;border:1px solid var(--line);background:var(--paper);width:34px;height:34px;border-radius:9px;cursor:pointer;flex:none;font-size:18px}
-.sheet .body{overflow:auto;padding:18px 20px 28px}
-.route{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:14px;border-radius:12px;background:var(--paper);border:1px solid var(--soft);margin-bottom:16px}
-.route .end{text-align:center;min-width:0}
-.route .end .flag{font-size:30px;display:block}
-.route .end span{font-size:13px;font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.route .arrow{color:var(--muted);font-family:var(--font-mono)}
-.verdict{border-radius:12px;padding:14px 16px;margin-bottom:18px;border:1px solid var(--line)}
-.verdict b{display:block;font-family:var(--font-display);font-size:19px;font-weight:700;margin-bottom:4px}
-.verdict p{margin:0;font-size:14px;color:var(--muted)}
-.sheet h4{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:var(--font-mono);margin:22px 0 8px}
-.recip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px}
-.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-.btn{border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:8px 12px;cursor:pointer;font-weight:500;font-size:13.5px}
-
-footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
-footer .wrap{padding-block:20px 30px;display:grid;gap:6px}
-footer a{color:var(--accent)}
-
-@media (max-width:960px){.grid{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:640px){
-  .datapage{grid-template-columns:auto 1fr}
-  .score{grid-column:1/-1}
-  .bigflag{font-size:40px;width:58px;height:58px}
-  .reqs>div{grid-template-columns:1fr;gap:2px}
-  .reg{grid-template-columns:78px 1fr 52px}
-  .sheet{top:auto;left:0;width:100%;max-height:88vh;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding-left:env(safe-area-inset-left,0px);animation:up .28s ease}
-  @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-  .hint{display:none}
-  header.top .wrap{gap:10px}
-  .seg{width:100%}.seg button{flex:1}
+@media (max-width:900px){
+  body{overflow:auto}
+  .app{display:flex;flex-direction:column;height:auto;min-height:100%}
+  #mapwrap{order:-1;height:58vh;min-height:320px;flex:none}
+  #side{border-right:0;overflow:visible;padding-right:env(safe-area-inset-right,0px)}
+  .head{position:static}
+  .tabs{top:0}
+  .sec{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  #detail{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;max-height:72vh;border-radius:10px 10px 0 0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:7}
+  .scrim[hidden]{display:none!important}
 }
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
-<header class="top">
-  <div class="wrap">
-    <div class="brand">
-      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="2" width="24" height="28" rx="4" fill="var(--accent)"/><circle cx="16" cy="14" r="6.2" fill="none" stroke="var(--accent-ink)" stroke-width="1.6"/><path d="M9.8 14h12.4M16 7.8c2.4 2.2 2.4 10.2 0 12.4M16 7.8c-2.4 2.2-2.4 10.2 0 12.4" stroke="var(--accent-ink)" stroke-width="1.3" fill="none"/><rect x="10" y="24" width="12" height="1.6" rx=".8" fill="var(--accent-ink)"/></svg>
-      <div><h1>Border Atlas</h1><small>Visa &amp; entry requirements</small></div>
+<div class="app">
+  <aside id="side">
+    <div class="sec head" id="head">
+      <div class="wordmark"><b>Border Atlas</b><span>199 passports · ISO 3166</span></div>
+      <div class="picker">
+        <span class="iso code" id="pickCode">TUR</span>
+        <input id="pickIn" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-label="Choose a country" aria-expanded="false" aria-controls="pickList">
+        <svg class="chev" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+        <ul id="pickList" role="listbox" hidden></ul>
+      </div>
+      <div class="seg" role="group" aria-label="Direction">
+        <button id="modeOut" aria-pressed="true">Travelling from here</button>
+        <button id="modeIn" aria-pressed="false">Travelling to here</button>
+      </div>
     </div>
-    <div class="picker" id="picker">
-      <label for="pickIn">Your passport / country</label>
-      <input id="pickIn" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="pickList">
-      <svg class="chev" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
-      <ul id="pickList" role="listbox" hidden></ul>
+    <div class="sec" id="summary"></div>
+    <div class="sec" id="legendSec"></div>
+    <div class="sec" id="regionSec"></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tabList" aria-selected="true">Destinations</button>
+      <button role="tab" id="tabEntry" aria-selected="false">Entry rules</button>
     </div>
-    <div class="seg" role="group" aria-label="Map direction">
-      <button id="modeOut" aria-pressed="true">Travelling from</button>
-      <button id="modeIn" aria-pressed="false">Travelling to</button>
-    </div>
+    <div class="sec" id="panel" style="border-bottom:0"></div>
+    <div class="foot" id="foot"></div>
+  </aside>
+  <div id="mapwrap">
+    <canvas id="map" aria-label="World map coloured by visa requirement"></canvas>
+    <div class="mtitle" id="mtitle"></div>
+    <div class="zoom"><button id="zIn" aria-label="Zoom in">+</button><button id="zOut" aria-label="Zoom out">−</button><button id="zReset" aria-label="Reset view" style="font-size:13px">⌂</button></div>
+    <div class="scale" id="scale">1×</div>
+    <div class="tip" id="tip" hidden></div>
+    <div class="scrim" id="scrim" hidden></div>
+    <section id="detail" hidden aria-live="polite"></section>
   </div>
-</header>
-
-<main>
-  <section class="wrap datapage" id="datapage"></section>
-  <section class="wrap">
-    <div class="mapcard">
-      <svg id="map" role="img" aria-label="World map coloured by visa requirement"></svg>
-      <div class="mapbar"><div class="maptitle" id="mapTitle"></div></div>
-      <div class="zoom"><button id="zIn" aria-label="Zoom in">+</button><button id="zOut" aria-label="Zoom out">−</button><button id="zReset" aria-label="Reset view">⟲</button></div>
-    </div>
-    <div class="legend" id="legend"></div>
-  </section>
-  <section class="wrap grid">
-    <div>
-      <div class="card" id="breakdown"></div>
-      <div class="card" id="listCard"></div>
-    </div>
-    <div>
-      <div class="card" id="entry"></div>
-    </div>
-  </section>
-</main>
-
-<footer><div class="wrap" id="foot"></div></footer>
-<div class="tip" id="tip" hidden></div>
-<div class="scrim" id="scrim" hidden></div>
-<aside class="sheet" id="sheet" hidden aria-modal="true" role="dialog"></aside>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
@@ -240,12 +213,13 @@ const V=window.VISA, CODES=V.codes, IDX={}; CODES.forEach((c,i)=>IDX[c]=i);
 const META={}; V.countries.forEach(c=>META[c.c]=c);
 const N=CODES.length;
 const CAT={
-  F:{label:'Visa-free',short:'Visa-free',color:'--c-free',desc:'No visa needed. Show your passport at the border.'},
-  T:{label:'Travel authorisation (eTA)',short:'eTA',color:'--c-eta',desc:'No visa, but an online travel authorisation must be approved before you board.'},
-  A:{label:'Visa on arrival',short:'On arrival',color:'--c-voa',desc:'Visa issued at the border or airport on arrival, usually for a fee. Some also offer the same visa online in advance.'},
-  E:{label:'e-Visa',short:'e-Visa',color:'--c-evisa',desc:'Apply and pay online before travel; print or carry the approval.'},
-  V:{label:'Visa required',short:'Visa required',color:'--c-req',desc:'A visa must be obtained in advance, usually through an embassy, consulate or visa centre.'},
-  X:{label:'No admission',short:'No admission',color:'--c-no',desc:'Holders of this passport are currently refused entry or entry is suspended.'}
+  F:{label:'Visa-free',color:'--c-free',desc:'No visa needed. Show your passport at the border.'},
+  T:{label:'Travel authorisation',color:'--c-eta',desc:'No visa, but an online authorisation (ETA, ESTA, eTA) must be approved before you board.'},
+  A:{label:'Visa on arrival',color:'--c-voa',desc:'Visa issued at the airport or border on arrival, usually for a fee. Often also available online in advance.'},
+  E:{label:'e-Visa',color:'--c-evisa',desc:'Apply and pay online before travel, and carry the approval.'},
+  V:{label:'Visa required',color:'--c-req',desc:'Get a visa in advance through an embassy, consulate or visa centre.'},
+  X:{label:'No admission',color:'--c-no',desc:'Holders of this passport are currently refused entry or entry is suspended.'},
+  S:{label:'Selected country',color:'--c-self',desc:''}
 };
 const ORDER=['F','T','A','E','V','X'];
 const REGIONS=['Europe','Asia','Africa','Americas','Oceania'];
@@ -465,224 +439,321 @@ SCH.forEach(c=>{if(!P[c])P[c]=schengenProfile});
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 function req(p,d){const k=V.m[IDX[p]][IDX[d]];const days=(V.d[p]||{})[d]||0;return{k:k==='-'?'S':k,days}}
-function daysTxt(r){if(r.k!=='F')return'';if(!r.days)return'No limit';return r.days+' days'}
-function name(c){return META[c]?META[c].n:c}
-function flag(c){return META[c]&&META[c].f?META[c].f:'🏳'}
-function cssv(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
-function outStats(p){const s={F:0,T:0,A:0,E:0,V:0,X:0};CODES.forEach(d=>{if(d!==p)s[req(p,d).k]++});return s}
-function inStats(d){const s={F:0,T:0,A:0,E:0,V:0,X:0};CODES.forEach(p=>{if(d!==p)s[req(p,d).k]++});return s}
+function stay(r){if(r.k!=='F')return'';return r.days?r.days+' days':'No limit'}
+const name=c=>META[c]?META[c].n:c;
+const iso=c=>`<span class="iso">${c}</span>`;
+function stats(c,dir){const s={F:0,T:0,A:0,E:0,V:0,X:0};CODES.forEach(o=>{if(o!==c)s[dir==='out'?req(c,o).k:req(o,c).k]++});return s}
 const mob=s=>s.F+s.T+s.A;
-// mobility ranks
-const MOB={};CODES.forEach(c=>MOB[c]=mob(outStats(c)));
-const sortedMob=[...new Set(Object.values(MOB))].sort((a,b)=>b-a);
-const rankOf=c=>sortedMob.indexOf(MOB[c])+1;
-const OPEN={};CODES.forEach(c=>OPEN[c]=mob(inStats(c)));
-const sortedOpen=[...new Set(Object.values(OPEN))].sort((a,b)=>b-a);
-const openRankOf=c=>sortedOpen.indexOf(OPEN[c])+1;
+const MOB={},OPEN={};CODES.forEach(c=>{MOB[c]=mob(stats(c,'out'));OPEN[c]=mob(stats(c,'in'))});
+const mobTiers=[...new Set(Object.values(MOB))].sort((a,b)=>b-a);
+const rankOf=c=>mobTiers.indexOf(MOB[c])+1;
+const ordinalPassports=c=>CODES.filter(o=>MOB[o]>MOB[c]).length+1;
 
 /* ---------- state ---------- */
-let sel='TUR', mode='out', filter=null, listTab='all', q='';
-try{const s=localStorage.getItem('ba.sel');if(s&&IDX[s]!==undefined)sel=s;const m=localStorage.getItem('ba.mode');if(m==='in'||m==='out')mode=m}catch(e){}
-function save(){try{localStorage.setItem('ba.sel',sel);localStorage.setItem('ba.mode',mode)}catch(e){}}
-// requirement shown on map for country c, relative to selected
-function relReq(c){return mode==='out'?req(sel,c):req(c,sel)}
+let sel='TUR',mode='out',filter=null,tab='list',q='',focus=null;
+try{const s=localStorage.getItem('ba.sel');if(s&&IDX[s]!==undefined)sel=s;const m=localStorage.getItem('ba.mode');if(m==='in'||m==='out')mode=m;const t=localStorage.getItem('ba.tab');if(t==='list'||t==='entry')tab=t}catch(e){}
+function save(){try{localStorage.setItem('ba.sel',sel);localStorage.setItem('ba.mode',mode);localStorage.setItem('ba.tab',tab)}catch(e){}}
+const relReq=c=>mode==='out'?req(sel,c):req(c,sel);
+const keyOf=c=>!c||IDX[c]===undefined?null:(c===sel?'S':relReq(c).k);
 
-/* ---------- map ---------- */
-const svg=d3.select('#map');
-const g=svg.append('g');
+/* =========================================================
+   MAP — canvas renderer
+   ========================================================= */
+const wrap=$('#mapwrap'),canvas=$('#map'),ctx=canvas.getContext('2d');
+const BW=1000,BH=520;
 const world=window.WORLD;
-const fc=topojson.feature(world,world.objects.countries);
-fc.features=fc.features.filter(f=>f.properties.name!=='Antarctica');
 const NUM={};V.countries.forEach(c=>{if(c.num)NUM[String(c.num).padStart(3,'0')]=c.c});
-fc.features.forEach(f=>{f.code=f.properties.name==='Kosovo'?'XKX':(f.id?NUM[String(f.id).padStart(3,'0')]:null)});
-const W=1000,H=520;
-svg.attr('viewBox',`0 0 ${W} ${H}`).attr('preserveAspectRatio','xMidYMid meet');
-const proj=d3.geoNaturalEarth1().fitExtent([[8,8],[W-8,H-8]],{type:'FeatureCollection',features:fc.features});
-const path=d3.geoPath(proj);
-g.append('path').attr('d',path(d3.geoGraticule10())).attr('fill','none').attr('stroke','var(--line)').attr('stroke-width',.4).attr('vector-effect','non-scaling-stroke').attr('opacity',.6);
-const shapes=g.append('g').selectAll('path').data(fc.features).join('path').attr('class','c').attr('d',path);
-// dots for small or missing countries
-const have={};fc.features.forEach(f=>{if(f.code){const a=path.area(f);have[f.code]=Math.max(have[f.code]||0,a)}});
-const dotData=V.countries.filter(c=>(have[c.c]===undefined||have[c.c]<6)&&c.ll&&(c.ll[0]||c.ll[1])).map(c=>{const p=proj([c.ll[1],c.ll[0]]);return{code:c.c,x:p[0],y:p[1]}});
-const dots=g.append('g').selectAll('circle').data(dotData).join('circle').attr('class','c').attr('cx',d=>d.x).attr('cy',d=>d.y).attr('r',3.2);
-const zoom=d3.zoom().scaleExtent([1,12]).translateExtent([[0,0],[W,H]]).on('zoom',e=>{g.attr('transform',e.transform);dots.attr('r',3.2/Math.sqrt(e.transform.k))});
-svg.call(zoom).on('dblclick.zoom',null);
-$('#zIn').onclick=()=>svg.transition().duration(300).call(zoom.scaleBy,1.6);
-$('#zOut').onclick=()=>svg.transition().duration(300).call(zoom.scaleBy,1/1.6);
-$('#zReset').onclick=()=>svg.transition().duration(400).call(zoom.transform,d3.zoomIdentity);
+function codeOf(f){if(f.properties&&f.properties.name==='Kosovo')return'XKX';return f.id!=null?NUM[String(f.id).padStart(3,'0')]||null:null}
+function prep(topo){const fc=topojson.feature(topo,topo.objects.countries);return fc.features.filter(f=>f.properties.name!=='Antarctica')}
+const lowF=prep(world);
+const proj=d3.geoNaturalEarth1().fitExtent([[6,6],[BW-6,BH-6]],{type:'FeatureCollection',features:lowF});
+const gpath=d3.geoPath(proj);
+function fixWind(f){const g=f.geometry;if(!g)return f;const polys=g.type==='Polygon'?[g.coordinates]:g.type==='MultiPolygon'?g.coordinates:[];for(const p of polys){if(d3.geoArea({type:'Polygon',coordinates:p})>2*Math.PI)p.forEach(r=>r.reverse())}return f}
+function makeFeat(f){fixWind(f);const b=gpath.bounds(f);return{f,code:codeOf(f),b,area:gpath.area(f),p:null,name:f.properties.name}}
+const low=lowF.map(makeFeat);
+low.forEach(o=>o.p=new Path2D(gpath(o.f)));
+let high=null,highLoading=false;
+const grat=new Path2D(gpath(d3.geoGraticule10()));
+const sphere=new Path2D(gpath({type:'Sphere'}));
+// label anchors and small-state dots
+const shapeArea={};low.forEach(o=>{if(o.code)shapeArea[o.code]=Math.max(shapeArea[o.code]||0,o.area)});
+const anchors={};V.countries.forEach(c=>{if(c.ll&&(c.ll[0]||c.ll[1])){const p=proj([c.ll[1],c.ll[0]]);if(p)anchors[c.c]=p}});
+// fix anchors that fall outside their own shape (e.g. France via overseas, USA) using largest polygon centroid
+low.forEach(o=>{if(!o.code||!anchors[o.code])return;const a=anchors[o.code];if(a[0]<o.b[0][0]||a[0]>o.b[1][0]||a[1]<o.b[0][1]||a[1]>o.b[1][1]){anchors[o.code]=gpath.centroid(o.f)}});
+const dotList=V.countries.filter(c=>anchors[c.c]&&(shapeArea[c.c]===undefined||shapeArea[c.c]<8)).map(c=>({code:c.c,x:anchors[c.c][0],y:anchors[c.c][1],a:shapeArea[c.c]||0}));
+const labelList=V.countries.filter(c=>anchors[c.c]).map(c=>({code:c.c,x:anchors[c.c][0],y:anchors[c.c][1],a:shapeArea[c.c]||0})).sort((a,b)=>b.a-a.a);
 
+let cw=0,ch=0,dpr=1,s0=1,ox=0,oy=0,T=d3.zoomIdentity,raf=0,hover=null;
+const MAXK=80;
+// Adaptive rendering: while the user is panning/zooming we draw the light 50m borders; if even that can't keep up
+// (slow GPU / huge screen) we transform a cached bitmap of the last frame and re-render sharply when the gesture pauses.
+let interacting=false,slow=false,lastFrame=0,ema=16,snapT=null;
+const snap=document.createElement('canvas'),sctx=snap.getContext('2d');
+function takeSnap(){snap.width=canvas.width;snap.height=canvas.height;sctx.drawImage(canvas,0,0);snapT=T}
+const zoom=d3.zoom().scaleExtent([1,MAXK])
+  .on('start',()=>{interacting=true;lastFrame=0;canvas.classList.add('drag');takeSnap()})
+  .on('zoom',e=>{T=e.transform;schedule();updScale();if(!tip.hidden)tip.hidden=true})
+  .on('end',()=>{interacting=false;canvas.classList.remove('drag');schedule()});
+const csel=d3.select(canvas).call(zoom).on('dblclick.zoom',function(e){const p=d3.pointer(e,canvas);csel.transition().duration(300).call(zoom.scaleBy,2,p)});
+function resize(){
+  const r=wrap.getBoundingClientRect();cw=Math.max(1,r.width);ch=Math.max(1,r.height);dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.round(cw*dpr);canvas.height=Math.round(ch*dpr);
+  s0=Math.min(cw/BW,ch/BH);ox=(cw-BW*s0)/2;oy=(ch-BH*s0)/2;
+  zoom.extent([[0,0],[cw,ch]]).translateExtent([[Math.min(0,ox)-cw*.15,Math.min(0,oy)-ch*.15],[Math.max(cw,ox+BW*s0)+cw*.15,Math.max(ch,oy+BH*s0)+ch*.15]]);
+  schedule();
+}
+new ResizeObserver(resize).observe(wrap);
+function schedule(){if(!raf)raf=requestAnimationFrame(draw)}
+let col={};
+function readColors(){const cs=getComputedStyle(document.documentElement);['ocean','grat','border','nodata','halo','label','ink','panel'].forEach(k=>col[k]=cs.getPropertyValue('--'+k).trim());Object.keys(CAT).forEach(k=>col[k]=cs.getPropertyValue(CAT[k].color).trim());schedule()}
+readColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readColors);
+new MutationObserver(readColors).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+function toBase(x,y){return[((x-T.x)/T.k-ox)/s0,((y-T.y)/T.k-oy)/s0]}
+function toScreen(bx,by){return[T.x+T.k*(ox+s0*bx),T.y+T.k*(oy+s0*by)]}
+function fillFor(code){const k=keyOf(code);if(!k)return col.nodata;return col[k]}
+function drawSnap(){
+  const r=T.k/snapT.k,tx=T.x-snapT.x*r,ty=T.y-snapT.y*r;
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=col.ocean;ctx.fillRect(0,0,cw,ch);
+  ctx.setTransform(dpr*r,0,0,dpr*r,dpr*tx,dpr*ty);ctx.imageSmoothingEnabled=true;ctx.drawImage(snap,0,0,cw,ch);
+}
+function draw(){
+  raf=0;
+  const now=performance.now();
+  if(interacting){if(lastFrame&&now-lastFrame<250)ema=ema*.7+(now-lastFrame)*.3;lastFrame=now;if(ema>26)slow=true}
+  if(interacting&&slow&&snapT){
+    const r=T.k/snapT.k,dx=Math.abs(T.x-snapT.x*r),dy=Math.abs(T.y-snapT.y*r);
+    if(r<2.2&&r>.45&&dx<cw*.35&&dy<ch*.35){drawSnap();return}
+  }
+  const K=T.k*s0;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle=col.ocean;ctx.fillRect(0,0,cw,ch);
+  ctx.setTransform(dpr*K,0,0,dpr*K,dpr*(T.x+T.k*ox),dpr*(T.y+T.k*oy));
+  const [vx0,vy0]=toBase(0,0),[vx1,vy1]=toBase(cw,ch);
+  const pad=2/K;
+  // graticule
+  ctx.lineWidth=.6/K;ctx.strokeStyle=col.grat;ctx.stroke(grat);ctx.stroke(sphere);
+  const useHigh=high&&K>3&&!interacting;
+  const set=useHigh?high:low;
+  const vis=[];
+  for(const o of set){const b=o.b;if(b[1][0]<vx0-pad||b[0][0]>vx1+pad||b[1][1]<vy0-pad||b[0][1]>vy1+pad)continue;if(!o.p)o.p=new Path2D(gpath(o.f));vis.push(o)}
+  for(const o of vis){const k=keyOf(o.code);ctx.globalAlpha=(filter&&k&&k!=='S'&&k!==filter)?.22:1;ctx.fillStyle=k?col[k]:col.nodata;ctx.fill(o.p)}
+  ctx.globalAlpha=1;
+  ctx.lineWidth=Math.min(.8,.5+K*.01)/K;ctx.strokeStyle=col.border;ctx.lineJoin='round';
+  for(const o of vis)ctx.stroke(o.p);
+  // selected + hover + focus outlines
+  const outline=(code,w,c)=>{if(!code)return;ctx.lineWidth=w/K;ctx.strokeStyle=c;for(const o of vis)if(o.code===code)ctx.stroke(o.p)};
+  outline(focus,2.2,col.ink);
+  if(hover&&hover!==focus)outline(hover,1.4,col.ink);
+  // screen space: dots, labels
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  for(const d of dotList){
+    if(d.a*K*K>40)continue;
+    const [x,y]=toScreen(d.x,d.y);if(x<-10||y<-10||x>cw+10||y>ch+10)continue;
+    const k=keyOf(d.code);
+    ctx.globalAlpha=(filter&&k&&k!=='S'&&k!==filter)?.25:1;
+    ctx.beginPath();ctx.arc(x,y,K>6?5:K>2?4:3,0,Math.PI*2);ctx.fillStyle=k?col[k]:col.nodata;ctx.fill();
+    ctx.lineWidth=(d.code===hover||d.code===focus)?2:1;ctx.strokeStyle=(d.code===hover||d.code===focus)?col.ink:col.border;ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  if(K>=1.6)drawLabels(K);
+  if(interacting&&slow)takeSnap();
+  if(!interacting)slow=slow&&ema>26;
+}
+const WCACHE=new Map();let FONT=null;
+function drawLabels(K){if(!FONT)FONT=getComputedStyle(document.body).fontFamily;
+  ctx.font=`600 ${K>8?12:11}px ${FONT}`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';
+  const placed=[];
+  for(const l of labelList){
+    const [x,y]=toScreen(l.x,l.y);if(x<0||y<0||x>cw||y>ch)continue;
+    const nm=name(l.code);const ck=ctx.font+nm;let w=WCACHE.get(ck);if(w===undefined){w=ctx.measureText(nm).width;WCACHE.set(ck,w)}
+    const shapePx=Math.sqrt(l.a)*K;
+    if(shapePx<w*0.55&&!(l.a===0&&K>10)&&!(shapePx>0&&K>14))continue;
+    const r=[x-w/2-3,y-8,x+w/2+3,y+8];
+    if(placed.some(p=>!(r[2]<p[0]||r[0]>p[2]||r[3]<p[1]||r[1]>p[3])))continue;
+    placed.push(r);
+    const yy=l.a<8?y-12:y;
+    ctx.lineWidth=3;ctx.strokeStyle=col.halo;ctx.strokeText(nm,x,yy);ctx.fillStyle=col.label;ctx.fillText(nm,x,yy);
+    if(placed.length>140)break;
+  }
+}
+function loadHigh(){
+  if(high||highLoading)return;highLoading=true;
+  fetch('world-10m.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(t=>{
+    setTimeout(()=>{high=prep(t).map(makeFeat);schedule()},0);
+  }).catch(()=>{});
+}
+// hit testing
+const hitCtx=document.createElement('canvas').getContext('2d');
+function hit(x,y){
+  const K=T.k*s0;
+  for(const d of dotList){if(d.a*K*K>40)continue;const [sx,sy]=toScreen(d.x,d.y);if((sx-x)**2+(sy-y)**2<81)return d.code}
+  const [bx,by]=toBase(x,y);
+  const set=(high&&K>3)?high:low;
+  for(const o of set){const b=o.b;if(bx<b[0][0]||bx>b[1][0]||by<b[0][1]||by>b[1][1])continue;if(!o.p)o.p=new Path2D(gpath(o.f));if(hitCtx.isPointInPath(o.p,bx,by))return o.code||('?'+o.name)}
+  return null;
+}
 const tip=$('#tip');
-function tipHTML(code){
-  if(!code||IDX[code]===undefined)return null;
-  if(code===sel)return`<strong>${flag(code)} ${esc(name(code))}</strong><span class="pill p-S">Selected</span>`;
-  const r=relReq(code);
-  const who=mode==='out'?`${esc(name(sel))} passport → here`:`${esc(name(code))} passport → ${esc(name(sel))}`;
-  return`<strong>${flag(code)} ${esc(name(code))}</strong><span style="color:var(--muted);font-size:12px">${who}</span><br><span class="pill p-${r.k}">${CAT[r.k].short}${daysTxt(r)?' · '+daysTxt(r):''}</span>`;
+let moveRaf=0,lastMove=null;
+canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;lastMove=e;if(!moveRaf)moveRaf=requestAnimationFrame(onMove)});
+function onMove(){
+  moveRaf=0;const e=lastMove;if(canvas.classList.contains('drag'))return;
+  const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  const h=hit(x,y);const code=h&&h[0]!=='?'?h:null;
+  if(code!==hover){hover=code;schedule()}
+  canvas.classList.toggle('hot',!!code);
+  if(!h){tip.hidden=true;return}
+  if(!code){tip.innerHTML=`<b>${esc(h.slice(1))}</b><small>Territory, not in the dataset</small>`}
+  else if(code===sel){tip.innerHTML=`<b>${esc(name(code))}</b><small>Selected country</small>`}
+  else{const rr=relReq(code);tip.innerHTML=`<b>${esc(name(code))}</b><small>${mode==='out'?esc(name(sel))+' passport':esc(name(code))+' passport → '+esc(name(sel))}</small><div class="k"><i style="background:${col[rr.k]}"></i>${CAT[rr.k].label}${rr.days?' · '+rr.days+' days':''}</div>`}
+  tip.hidden=false;
+  const tw=tip.offsetWidth,th=tip.offsetHeight;
+  tip.style.left=Math.min(x+14,cw-tw-6)+'px';tip.style.top=Math.min(y+14,ch-th-6)+'px';
 }
-function bindHover(sel_){
-  sel_.on('mousemove',(e,d)=>{const h=tipHTML(d.code);if(!h){tip.hidden=true;return}tip.innerHTML=h;tip.hidden=false;
-      const x=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8),y=Math.min(e.clientY+14,innerHeight-tip.offsetHeight-8);tip.style.left=x+'px';tip.style.top=y+'px'})
-    .on('mouseleave',()=>tip.hidden=true)
-    .on('click',(e,d)=>{tip.hidden=true;if(d.code&&IDX[d.code]!==undefined)openSheet(d.code)});
+canvas.addEventListener('pointerleave',()=>{tip.hidden=true;if(hover){hover=null;schedule()}});
+canvas.addEventListener('click',e=>{
+  const r=canvas.getBoundingClientRect();const h=hit(e.clientX-r.left,e.clientY-r.top);
+  if(h&&h[0]!=='?'&&IDX[h]!==undefined)openDetail(h);
+});
+$('#zIn').onclick=()=>csel.transition().duration(250).call(zoom.scaleBy,2);
+$('#zOut').onclick=()=>csel.transition().duration(250).call(zoom.scaleBy,.5);
+$('#zReset').onclick=()=>csel.transition().duration(350).call(zoom.transform,d3.zoomIdentity);
+function updScale(){$('#scale').textContent=(T.k<10?T.k.toFixed(1):Math.round(T.k))+'×';$('#zIn').disabled=T.k>=MAXK-.01;$('#zOut').disabled=T.k<=1.001}
+function zoomTo(code){
+  const os=low.filter(o=>o.code===code);let b;
+  if(os.length){b=os.reduce((m,o)=>o.area>m.area?o:m).b}else if(anchors[code]){const a=anchors[code];b=[[a[0]-4,a[1]-4],[a[0]+4,a[1]+4]]}else return;
+  const [x0,y0]=[ox+s0*b[0][0],oy+s0*b[0][1]],[x1,y1]=[ox+s0*b[1][0],oy+s0*b[1][1]];
+  const k=Math.max(1,Math.min(MAXK,.7/Math.max((x1-x0)/cw,(y1-y0)/ch)));
+  const t=d3.zoomIdentity.translate(cw/2,ch/2).scale(k).translate(-(x0+x1)/2,-(y0+y1)/2);
+  csel.transition().duration(600).call(zoom.transform,t);
 }
-bindHover(shapes);bindHover(dots);
-shapes.append('title').text(d=>d.code?name(d.code):d.properties.name+' (no data)');
 
-function paintMap(){
-  const cls=d=>{if(!d.code||IDX[d.code]===undefined)return'c';const k=d.code===sel?'S':relReq(d.code).k;const dim=filter&&k!=='S'&&k!==filter;return`c k-${k}${dim?' dim':''}`};
-  shapes.attr('class',cls);dots.attr('class',cls);
-  $('#mapTitle').innerHTML=mode==='out'
-    ?`${flag(sel)} What a <b>${esc(name(sel))}</b> passport needs, by destination`
-    :`${flag(sel)} What each passport needs to enter <b>${esc(name(sel))}</b>`;
-}
-
-/* ---------- picker ---------- */
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
 const pin=$('#pickIn'),plist=$('#pickList');
-const sortedCountries=[...V.countries].sort((a,b)=>a.n.localeCompare(b.n));
+const sorted=[...V.countries].sort((a,b)=>a.n.localeCompare(b.n));
 let active=0,shown=[];
 function renderPick(f){
   const t=(f||'').toLowerCase().trim();
-  shown=sortedCountries.filter(c=>!t||c.n.toLowerCase().includes(t)||c.c.toLowerCase()===t||(c.o||'').toLowerCase().includes(t));
+  shown=sorted.filter(c=>!t||c.n.toLowerCase().includes(t)||c.c.toLowerCase()===t||(c.o||'').toLowerCase().includes(t));
   active=0;
-  plist.innerHTML=shown.map((c,i)=>`<li role="option" id="opt-${c.c}" data-c="${c.c}" aria-selected="${i===0}"><span class="flag">${c.f}</span>${esc(c.n)}<span class="iso">${c.c}</span></li>`).join('')||'<li class="empty">No country matches</li>';
+  plist.innerHTML=shown.map((c,i)=>`<li role="option" data-c="${c.c}" aria-selected="${i===0}">${iso(c.c)}${esc(c.n)}<small>${esc(c.r)}</small></li>`).join('')||'<li>No match</li>';
 }
-function openPick(){renderPick('');plist.hidden=false;pin.setAttribute('aria-expanded','true');pin.select()}
-function closePick(){plist.hidden=true;pin.setAttribute('aria-expanded','false');pin.value=`${flag(sel)}  ${name(sel)}`}
-pin.addEventListener('focus',openPick);
+pin.addEventListener('focus',()=>{renderPick('');plist.hidden=false;pin.setAttribute('aria-expanded','true');pin.select()});
 pin.addEventListener('input',()=>{renderPick(pin.value);plist.hidden=false});
 pin.addEventListener('keydown',e=>{
-  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!shown.length)return;active=(active+(e.key==='ArrowDown'?1:-1)+shown.length)%shown.length;
-    [...plist.children].forEach((li,i)=>li.setAttribute('aria-selected',i===active));plist.children[active].scrollIntoView({block:'nearest'})}
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!shown.length)return;active=(active+(e.key==='ArrowDown'?1:-1)+shown.length)%shown.length;[...plist.children].forEach((li,i)=>li.setAttribute('aria-selected',i===active));plist.children[active].scrollIntoView({block:'nearest'})}
   else if(e.key==='Enter'){e.preventDefault();if(shown[active]){choose(shown[active].c);pin.blur()}}
-  else if(e.key==='Escape'){closePick();pin.blur()}
+  else if(e.key==='Escape'){pin.blur()}
 });
 plist.addEventListener('mousedown',e=>{const li=e.target.closest('li[data-c]');if(li){e.preventDefault();choose(li.dataset.c);pin.blur()}});
-pin.addEventListener('blur',()=>setTimeout(closePick,120));
-function choose(c){sel=c;filter=null;q='';listTab='all';save();renderAll();closePick()}
+pin.addEventListener('blur',()=>setTimeout(()=>{plist.hidden=true;pin.setAttribute('aria-expanded','false');pin.value=name(sel)},120));
+function choose(c){sel=c;filter=null;q='';focus=null;$('#detail').hidden=true;$('#scrim').hidden=true;save();renderAll();zoomTo(c)}
 
-/* ---------- mode ---------- */
-function setMode(m){mode=m;filter=null;save();$('#modeOut').setAttribute('aria-pressed',m==='out');$('#modeIn').setAttribute('aria-pressed',m==='in');renderAll()}
+function setMode(m){mode=m;filter=null;save();renderAll()}
 $('#modeOut').onclick=()=>setMode('out');$('#modeIn').onclick=()=>setMode('in');
+function setTab(t){tab=t;save();$('#tabList').setAttribute('aria-selected',t==='list');$('#tabEntry').setAttribute('aria-selected',t==='entry');renderPanel()}
+$('#tabList').onclick=()=>setTab('list');$('#tabEntry').onclick=()=>setTab('entry');
 
-/* ---------- sections ---------- */
-function mrz(c){const n=name(c).toUpperCase().replace(/[^A-Z ]/g,'').replace(/ +/g,'<');let l1=('P<'+c+n+'<<TRAVELLER').padEnd(44,'<').slice(0,44);let l2=(c+'0000000<0'+c+'9001017M3012315<<<<<<<<<<<<<<06').padEnd(44,'<').slice(0,44);return (l1+'   '+l2).replace(/</g,'&lt;').replace(/ /g,'&nbsp;')}
-function renderHeader(){
-  const m=META[sel], so=outStats(sel), si=inStats(sel);
-  $('#datapage').innerHTML=`
-   <div class="bigflag" aria-hidden="true">${m.f}</div>
-   <div class="dp-main"><div class="eyebrow">${esc(m.r)}${m.sr&&m.sr!==m.r?' · '+esc(m.sr):''} · ${sel}</div>
-     <h2>${esc(m.n)}</h2>
-     <p>${mode==='out'?`A ${esc(m.n)} passport opens <b>${mob(so)}</b> of ${N-1} destinations without a prior visa (visa-free, eTA or visa on arrival).`:`<b>${OPEN[sel]}</b> of ${N-1} passports can enter ${esc(m.n)} without arranging a visa in advance.`}</p></div>
-   <div class="score">
-     <div><b class="tab">${mob(so)}</b><span>Mobility score</span></div>
-     <div><b class="tab">#${rankOf(sel)}</b><span>Passport rank</span></div>
-     <div><b class="tab">${OPEN[sel]}</b><span>Passports welcomed</span></div>
-   </div>
-   <div class="mrz" aria-hidden="true">${mrz(sel)}</div>`;
+function barHTML(s){const t=ORDER.reduce((a,k)=>a+s[k],0)||1;return`<div class="bar">${ORDER.map(k=>s[k]?`<span style="width:${(s[k]/t*100).toFixed(2)}%;background:var(${CAT[k].color})"></span>`:'').join('')}</div>`}
+
+function renderSummary(){
+  const m=META[sel];
+  const sub=[m.sr||m.r,m.cap?'capital '+m.cap:''].filter(Boolean).join(' · ');
+  const lede=mode==='out'
+    ?`Citizens can enter <b>${MOB[sel]}</b> of ${N-1} countries without arranging a visa first.`
+    :`<b>${OPEN[sel]}</b> of ${N-1} nationalities can enter without arranging a visa first.`;
+  $('#summary').innerHTML=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">${iso(sel)}<span style="font-size:12px;color:var(--muted)">${esc(sub)}</span></div>
+   <h1 class="title">${esc(m.n)}</h1><p class="lede">${lede}</p>
+   <div class="figs"><div><b>${MOB[sel]}</b><span>Visa-free reach</span></div><div><b>${ordinalPassports(sel)}<small style="font-size:12px;color:var(--muted);font-weight:500"> / ${N}</small></b><span>Passport rank</span></div><div><b>${OPEN[sel]}</b><span>Nationalities admitted</span></div></div>`;
 }
 function renderLegend(){
-  const s=mode==='out'?outStats(sel):inStats(sel);
-  $('#legend').innerHTML=ORDER.filter(k=>s[k]>0||k!=='X').map(k=>`<button class="chip${filter&&filter!==k?' off':''}" data-k="${k}" aria-pressed="${filter===k}"><i style="background:var(${CAT[k].color})"></i>${CAT[k].label} <b>${s[k]}</b></button>`).join('')
-   +`<span class="chip" style="cursor:default"><i style="background:var(--c-self)"></i>Selected</span><span class="chip" style="cursor:default"><i style="background:var(--nodata)"></i>Territory / no data</span><span class="hint">Tap a category to isolate it · tap any country for details</span>`;
-  $('#legend').querySelectorAll('button.chip').forEach(b=>b.onclick=()=>{filter=filter===b.dataset.k?null:b.dataset.k;listTab=filter||'all';renderLegend();paintMap();renderList()});
+  const s=stats(sel,mode),t=N-1;
+  $('#legendSec').innerHTML=`<h2>${mode==='out'?'Requirement by destination':'Requirement by nationality'}</h2>${barHTML(s)}
+   <ul class="leg${filter?' filtering':''}">${ORDER.filter(k=>s[k]||k!=='X').map(k=>`<li><button data-k="${k}" aria-pressed="${filter===k}"><i style="background:var(${CAT[k].color})"></i><span>${CAT[k].label}</span><span class="n">${s[k]}</span><span class="p">${Math.round(s[k]/t*100)}%</span></button></li>`).join('')}</ul>
+   <p class="note">${filter?'Showing one category. Click it again to show all.':'Click a category to isolate it on the map.'}</p>`;
+  $('#legendSec').querySelectorAll('button[data-k]').forEach(b=>b.onclick=()=>{filter=filter===b.dataset.k?null:b.dataset.k;renderLegend();schedule();if(tab==='list')renderPanel()});
 }
-function renderBreakdown(){
-  const s=mode==='out'?outStats(sel):inStats(sel), tot=N-1;
-  const bar=st=>{const t=ORDER.reduce((a,k)=>a+st[k],0)||1;return`<div class="stack">${ORDER.map(k=>st[k]?`<span style="width:${st[k]/t*100}%;background:var(${CAT[k].color})" title="${CAT[k].label}: ${st[k]}"></span>`:'').join('')}</div>`};
-  const rows=REGIONS.map(r=>{const st={F:0,T:0,A:0,E:0,V:0,X:0};let n=0,easy=0;CODES.forEach(c=>{if(c===sel||META[c].r!==r)return;const k=relReq(c).k;st[k]++;n++;if('FTA'.includes(k))easy++});return`<div class="reg"><span>${r}</span>${bar(st)}<span class="n">${easy}/${n}</span></div>`}).join('');
-  const longest=mode==='out'?CODES.filter(c=>c!==sel&&req(sel,c).k==='F'&&req(sel,c).days>=180).length:0;
-  $('#breakdown').innerHTML=`<h3>${mode==='out'?'Where this passport takes you':'Who can come in'}</h3>
-   <p class="sub">${mode==='out'?`Share of ${tot} destinations by entry type, then by region. Right column: destinations open without a prior visa.`:`Share of ${tot} passports by what they need to enter ${esc(name(sel))}.`}</p>
-   ${bar(s)}
-   <div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 18px;font-size:13px;color:var(--muted)">${ORDER.filter(k=>s[k]).map(k=>`<span><b style="color:var(--ink)" class="tab">${Math.round(s[k]/tot*100)}%</b> ${CAT[k].short.toLowerCase()}</span>`).join('')}${longest?`<span><b style="color:var(--ink)" class="tab">${longest}</b> allow 180+ days</span>`:''}</div>
-   <div class="regions">${rows}</div>`;
+function renderRegions(){
+  const rows=REGIONS.map(r=>{const s={F:0,T:0,A:0,E:0,V:0,X:0};let n=0,ok=0;CODES.forEach(c=>{if(c===sel||META[c].r!==r)return;const k=relReq(c).k;s[k]++;n++;if('FTA'.includes(k))ok++});return`<tr><td>${r}</td><td>${barHTML(s)}</td><td>${ok}/${n}</td></tr>`}).join('');
+  $('#regionSec').innerHTML=`<h2>By region <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--faint)">· no visa needed in advance</span></h2><table class="reg">${rows}</table>`;
 }
-function renderList(){
-  const card=$('#listCard');
-  const s=mode==='out'?outStats(sel):inStats(sel);
-  const groups=ORDER.map(k=>({k,items:CODES.filter(c=>c!==sel&&relReq(c).k===k&&(!q||name(c).toLowerCase().includes(q))).sort((a,b)=>name(a).localeCompare(name(b)))}));
-  const vis=groups.filter(gr=>gr.items.length&&(listTab==='all'||listTab===gr.k));
-  card.innerHTML=`<h3>${mode==='out'?'All destinations':'All passports'}</h3>
-   <p class="sub">${mode==='out'?`Entry rules for ${esc(name(sel))} citizens, with the maximum visa-free stay.`:`Rules for each nationality entering ${esc(name(sel))}.`}</p>
-   <div class="tools"><input id="q" type="search" placeholder="Filter by country name" value="${esc(q)}" aria-label="Filter list"></div>
-   <div class="tabs"><button data-t="all" aria-pressed="${listTab==='all'}">All <span class="tab">${N-1}</span></button>${ORDER.filter(k=>s[k]).map(k=>`<button data-t="${k}" aria-pressed="${listTab===k}"><i style="background:var(${CAT[k].color})"></i>${CAT[k].short} <span class="tab">${s[k]}</span></button>`).join('')}</div>
-   <div class="list">${vis.length?vis.map(gr=>`<div class="group"><h4><i style="background:var(${CAT[gr.k].color})"></i>${CAT[gr.k].label} · ${gr.items.length}</h4><div class="rows">${gr.items.map(c=>{const r=relReq(c);return`<button class="row" data-c="${c}"><span class="flag">${flag(c)}</span><span class="nm">${esc(name(c))}</span><span class="d">${daysTxt(r)}</span></button>`}).join('')}</div></div>`).join(''):'<p class="empty">No countries match this filter.</p>'}</div>`;
-  const qi=card.querySelector('#q');
-  qi.oninput=()=>{q=qi.value.toLowerCase().trim();const pos=qi.selectionStart;renderList();const n=$('#q');n.focus();n.setSelectionRange(pos,pos)};
-  card.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{listTab=b.dataset.t;filter=listTab==='all'?null:listTab;renderList();renderLegend();paintMap()});
-  card.querySelectorAll('.row').forEach(b=>b.onclick=()=>openSheet(b.dataset.c));
+function renderPanel(){
+  const el=$('#panel');
+  if(tab==='entry'){el.innerHTML=entryHTML(sel,true);return}
+  const s=stats(sel,mode);
+  const groups=ORDER.map(k=>({k,items:CODES.filter(c=>c!==sel&&relReq(c).k===k&&(!q||name(c).toLowerCase().includes(q))).sort((a,b)=>name(a).localeCompare(name(b)))})).filter(g=>g.items.length&&(!filter||g.k===filter));
+  el.innerHTML=`<input class="filter" id="q" type="search" placeholder="Filter ${mode==='out'?'destinations':'nationalities'}" value="${esc(q)}" aria-label="Filter list">
+   ${groups.length?groups.map(g=>`<div class="grp"><h3><i style="background:var(${CAT[g.k].color})"></i>${CAT[g.k].label}<span>${g.items.length}</span></h3><div class="rows">${g.items.map(c=>{const r=relReq(c);return`<button class="row${c===focus?' on':''}" data-c="${c}">${iso(c)}<span class="nm">${esc(name(c))}</span><span class="d">${stay(r)}</span></button>`}).join('')}</div></div>`).join(''):'<p class="empty">No countries match.</p>'}`;
+  const qi=el.querySelector('#q');
+  qi.oninput=()=>{q=qi.value.toLowerCase().trim();const p=qi.selectionStart;renderPanel();const n=$('#q');n.focus();n.setSelectionRange(p,p)};
+  el.querySelectorAll('.row').forEach(b=>b.onclick=()=>{openDetail(b.dataset.c);zoomTo(b.dataset.c)});
 }
 function genericProfile(c){
-  const si=inStats(c),m=META[c];
+  const si=stats(c,'in'),m=META[c];
   const dom=ORDER.reduce((a,k)=>si[k]>si[a]?k:a,'F');
-  const items=[
-    ['Most visitors',`${CAT[dom].label} applies to ${si[dom]} of ${N-1} nationalities.`],
-    ['Passport','Carry a passport valid at least 6 months beyond your arrival with at least one blank page; many airlines enforce this even where the law is looser.'],
-    ['Proof','Expect to show a return or onward ticket, accommodation details and enough funds for the stay.']
-  ];
-  if(si.A)items.push(['On arrival',`${si.A} nationalities can get a visa at the border. Carry cash in USD or EUR and passport photos in case card payment is unavailable.`]);
-  if(si.E)items.push(['e-Visa',`${si.E} nationalities apply online in advance. Use the government portal and avoid look-alike agent sites.`]);
-  if(m.r==='Africa'||m.sr==='South America')items.push(['Health','A yellow fever vaccination certificate may be required, particularly if you arrive from or transit through a risk country.']);
+  const items=[['Most visitors',`${CAT[dom].label}: applies to ${si[dom]} of ${N-1} nationalities.`],
+    ['Passport','Carry a passport valid at least 6 months beyond arrival with a blank page. Airlines often enforce this even where the law is looser.'],
+    ['Proof','Expect to show a return or onward ticket, where you are staying, and enough money for the trip.']];
+  if(si.A)items.push(['Visa on arrival',`Available to ${si.A} nationalities. Carry US dollars or euros in cash and spare passport photos in case cards are not accepted.`]);
+  if(si.E)items.push(['e-Visa',`Available to ${si.E} nationalities. Apply on the government portal and avoid look-alike agency sites.`]);
+  if(m.r==='Africa'||m.sr==='South America')items.push(['Health','A yellow fever certificate may be required, especially if you arrive from or transit through a risk country.']);
   return{items,generic:true};
 }
-function renderEntry(){
-  const c=sel,m=META[c],p=P[c]||genericProfile(c),si=inStats(c);
-  const t=N-1;
-  $('#entry').innerHTML=`<div class="eyebrow">Entry requirements</div>
-   <h3 style="font-size:22px;font-weight:700;margin-top:4px">Entering ${esc(m.n)}</h3>
-   <p class="sub">${p.generic?'General guidance built from the visa data. ':'Key rules for visitors. '}Always confirm with the official source before you travel.</p>
-   ${(p.tags||[]).length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin:-6px 0 14px">${p.tags.map(x=>`<span class="tag">${esc(x)}</span>`).join('')}</div>`:''}
-   <dl class="facts">
-     <div><dt>Capital</dt><dd>${esc(m.cap||'—')}</dd></div>
-     <div><dt>Currency</dt><dd>${esc(m.cur.join(', ')||'—')}</dd></div>
-     <div><dt>Languages</dt><dd>${esc(m.lang.join(', ')||'—')}</dd></div>
-     <div><dt>Dialling code</dt><dd class="mono">${esc(m.idd||'—')}</dd></div>
-     <div><dt>Openness rank</dt><dd class="tab">#${openRankOf(c)} of ${sortedOpen.length} tiers</dd></div>
-     <div><dt>Land borders</dt><dd>${m.b.length?m.b.length+' countries':'None (island / enclave)'}</dd></div>
-   </dl>
-   <div class="openbar"><div class="lbl"><span>Passports that need no prior visa</span><span class="tab">${OPEN[c]} / ${t}</span></div>
-     <div class="stack">${ORDER.map(k=>si[k]?`<span style="width:${si[k]/t*100}%;background:var(${CAT[k].color})" title="${CAT[k].label}: ${si[k]}"></span>`:'').join('')}</div></div>
-   <dl class="reqs">${p.items.map(([a,b])=>`<div><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join('')}</dl>
-   ${p.link?`<a class="official" href="${p.link[1]}" target="_blank" rel="noopener">${esc(p.link[0])} ↗</a>`:`<a class="official" href="https://www.iatatravelcentre.com/" target="_blank" rel="noopener">IATA Travel Centre ↗</a>`}
-   <div class="btnrow"><button class="btn" id="seeIn">${mode==='in'?'Showing who can enter on the map':'Show who can enter on the map'}</button></div>`;
-  $('#seeIn').onclick=()=>{if(mode!=='in'){setMode('in')}document.querySelector('.mapcard').scrollIntoView({behavior:'smooth',block:'center'})};
+function entryHTML(c,full){
+  const m=META[c],p=P[c]||genericProfile(c);
+  const link=p.link||['IATA Travel Centre','https://www.iatatravelcentre.com/'];
+  return`${full?`<dl class="kv"><dt>Currency</dt><dd>${esc(m.cur.join(', ')||'—')}</dd><dt>Languages</dt><dd>${esc(m.lang.join(', ')||'—')}</dd><dt>Dialling code</dt><dd>${esc(m.idd||'—')}</dd><dt>Admits</dt><dd class="num">${OPEN[c]} of ${N-1} nationalities without a prior visa</dd></dl>`:''}
+   ${(p.tags||[]).length?`<div class="tags">${p.tags.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}
+   <dl class="rules">${p.items.map(([a,b])=>`<div><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join('')}</dl>
+   ${p.generic?'<p class="generic">General guidance derived from the visa data. Confirm details with the official source.</p>':''}
+   <a class="src" href="${link[1]}" target="_blank" rel="noopener">${esc(link[0])} ↗</a>`;
 }
 
-/* ---------- detail sheet ---------- */
-const sheet=$('#sheet'),scrim=$('#scrim');let lastFocus=null;
-function openSheet(c){
-  lastFocus=document.activeElement;
-  const from=mode==='out'?sel:c, to=mode==='out'?c:sel;
-  const r=req(from,to), back=req(to,from), pm=META[to], prof=P[to]||genericProfile(to);
-  const verdictColor=`var(${CAT[r.k]?.color||'--c-self'})`;
-  const sameEU=EU.includes(from)&&(EU.includes(to)||SCH.includes(to));
-  let note=CAT[r.k]?CAT[r.k].desc:'';
-  if(r.k==='F'&&r.days)note=`Visa-free for up to ${r.days} days. `+(SCH.includes(to)&&!EU.includes(from)&&!['ISL','NOR','CHE','LIE'].includes(from)?'Schengen days are counted across all member states.':'');
-  if(r.k==='F'&&!r.days)note=sameEU?'Freedom of movement: no time limit for short visits, and a national ID card is usually enough.':'Visa-free with no fixed limit for visits.';
-  sheet.innerHTML=`<header><div><div class="eyebrow">${from===to?'':'Border detail'}</div><h3>${flag(to)} ${esc(name(to))}</h3></div><button class="x" id="sx" aria-label="Close">×</button></header>
-   <div class="body">
-    <div class="route"><div class="end"><span class="flag">${flag(from)}</span><span>${esc(name(from))} passport</span></div><div class="arrow">──▶</div><div class="end"><span class="flag">${flag(to)}</span><span>${esc(name(to))}</span></div></div>
-    <div class="verdict" style="border-color:${verdictColor};background:color-mix(in srgb,${verdictColor} 10%,var(--panel))"><b style="color:${verdictColor}">${CAT[r.k]?CAT[r.k].label:'Home country'}${daysTxt(r)&&r.days?' · '+r.days+' days':''}</b><p>${esc(note)}</p></div>
-    <h4>The other way</h4>
-    <div class="recip"><span>${flag(to)} ${esc(name(to))} passport → ${flag(from)} ${esc(name(from))}</span><span class="pill p-${back.k}">${CAT[back.k]?CAT[back.k].short:''}${back.k==='F'&&back.days?' · '+back.days+' d':''}</span>${back.k===r.k?'<span class="tag">Reciprocal</span>':'<span class="tag">Not reciprocal</span>'}</div>
-    <h4>Entering ${esc(pm.n)}</h4>
-    <dl class="reqs">${prof.items.map(([a,b])=>`<div><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join('')}</dl>
-    <h4>Quick facts</h4>
-    <dl class="facts" style="margin-bottom:0"><div><dt>Capital</dt><dd>${esc(pm.cap||'—')}</dd></div><div><dt>Currency</dt><dd>${esc(pm.cur.join(', ')||'—')}</dd></div><div><dt>Languages</dt><dd>${esc(pm.lang.join(', ')||'—')}</dd></div><div><dt>Passports welcomed</dt><dd class="tab">${OPEN[to]} / ${N-1}</dd></div></dl>
-    ${prof.link?`<a class="official" href="${prof.link[1]}" target="_blank" rel="noopener">${esc(prof.link[0])} ↗</a>`:`<a class="official" href="https://www.iatatravelcentre.com/" target="_blank" rel="noopener">Check on IATA Travel Centre ↗</a>`}
-    <div class="btnrow"><button class="btn" id="mk">Make ${esc(name(c))} the selected country</button></div>
+/* ---------- detail panel ---------- */
+const detail=$('#detail'),scrim=$('#scrim');
+function openDetail(c){
+  focus=c;schedule();
+  const from=mode==='out'?sel:c,to=mode==='out'?c:sel;
+  const r=req(from,to),back=req(to,from);
+  const EUs=['AUT','BEL','BGR','HRV','CYP','CZE','DNK','EST','FIN','FRA','DEU','GRC','HUN','IRL','ITA','LVA','LTU','LUX','MLT','NLD','POL','PRT','ROU','SVK','SVN','ESP','SWE'];
+  let sub=CAT[r.k].desc;
+  if(r.k==='F'&&r.days)sub=`Stay up to ${r.days} days without a visa.`+(SCH.includes(to)&&!EUs.includes(from)?' Schengen days count across all member states.':'');
+  if(r.k==='F'&&!r.days)sub=EUs.includes(from)&&(EUs.includes(to)||SCH.includes(to))?'Freedom of movement. A national ID card is usually enough.':'No visa and no fixed limit for visits.';
+  if(r.k==='S')sub='Home country.';
+  detail.innerHTML=`<div class="dh"><div><h3>${esc(name(c))}</h3><small>${iso(from)} ${esc(name(from))} passport → ${esc(name(to))}</small></div><button class="x" id="dx" aria-label="Close">×</button></div>
+   <div class="db">
+     <div class="verdict"><i style="background:var(${CAT[r.k].color})"></i><div><b>${CAT[r.k].label}${r.days?' · '+r.days+' days':''}</b><span>${esc(sub)}</span></div></div>
+     ${r.k!=='S'?`<div class="dsub">Reverse direction</div><div class="back"><i style="background:var(${CAT[back.k].color})"></i>${esc(name(to))} passport → ${esc(name(from))}: <b>${CAT[back.k].label}${back.days?' · '+back.days+' d':''}</b>${back.k===r.k?'<span style="color:var(--faint)">(reciprocal)</span>':''}</div>`:''}
+     <div class="dsub">Entering ${esc(name(to))}</div>
+     ${entryHTML(to,false)}
+     ${c!==sel?`<div><button class="btn" id="mk">Select ${esc(name(c))}</button></div>`:''}
    </div>`;
-  sheet.hidden=false;scrim.hidden=false;
-  shapes.classed('focus',d=>d.code===c);dots.classed('focus',d=>d.code===c);
-  $('#sx').onclick=closeSheet;$('#mk').onclick=()=>{closeSheet();choose(c);window.scrollTo({top:0,behavior:'smooth'})};
-  $('#sx').focus();
+  detail.hidden=false;scrim.hidden=false;detail.scrollTop=0;
+  $('#dx').onclick=closeDetail;const mk=$('#mk');if(mk)mk.onclick=()=>choose(c);
+  document.querySelectorAll('.row').forEach(b=>b.classList.toggle('on',b.dataset.c===c));
 }
-function closeSheet(){sheet.hidden=true;scrim.hidden=true;shapes.classed('focus',false);dots.classed('focus',false);if(lastFocus&&lastFocus.focus)lastFocus.focus()}
-scrim.onclick=closeSheet;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!sheet.hidden)closeSheet()});
+function closeDetail(){detail.hidden=true;scrim.hidden=true;focus=null;schedule();document.querySelectorAll('.row.on').forEach(b=>b.classList.remove('on'))}
+scrim.onclick=closeDetail;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!detail.hidden)closeDetail()});
 
-$('#foot').innerHTML=`<div>Visa matrix: <a href="https://github.com/ilyankou/passport-index-dataset" target="_blank" rel="noopener">Passport Index open dataset</a> (199 passports × 199 destinations, January 2025), updated for later changes: UK ETA extended to EU and all visa-exempt nationals (2025), Israel ETA-IL (2025), visas reinstated by Brazil for US, Canadian and Australian citizens (April 2025), and China's 30-day visa-free list including the UK and Canada (Feb 2026) and Russia.</div><div>Entry rules change often and can depend on purpose of travel, residence permits and passport type. This page covers ordinary passports for short tourist visits. Confirm with the destination's official source or your airline before travelling. Reviewed October 2026.</div><div>Map: Natural Earth via world-atlas. Small states are drawn as dots.</div>`;
+$('#foot').innerHTML=`<div>Visa matrix from the <a href="https://github.com/ilyankou/passport-index-dataset" target="_blank" rel="noopener">Passport Index open dataset</a> (January 2025), corrected for: UK ETA for all visa-exempt visitors, Israel ETA-IL, Brazil visas for US/Canadian/Australian citizens, and China's 30-day visa-free list (incl. UK, Canada, Russia). Reviewed October 2026.</div><div>Covers ordinary passports on short tourist visits. Rules change often; confirm with the official source or your airline before travelling.</div><div>Borders: Natural Earth. Disputed areas are shown as in the source and imply no position.</div>`;
 
-function renderAll(){$('#modeOut').setAttribute('aria-pressed',mode==='out');$('#modeIn').setAttribute('aria-pressed',mode==='in');pin.value=`${flag(sel)}  ${name(sel)}`;renderHeader();paintMap();renderLegend();renderBreakdown();renderList();renderEntry()}
-renderAll();
+function renderAll(){
+  $('#modeOut').setAttribute('aria-pressed',mode==='out');$('#modeIn').setAttribute('aria-pressed',mode==='in');
+  $('#tabList').setAttribute('aria-selected',tab==='list');$('#tabEntry').setAttribute('aria-selected',tab==='entry');
+  $('#tabList').textContent=mode==='out'?'Destinations':'Nationalities';
+  $('#tabEntry').textContent=`Entering ${name(sel)}`;
+  pin.value=name(sel);$('#pickCode').textContent=sel;
+  $('#mtitle').innerHTML=`<span>${mode==='out'?`Where a <b>${esc(name(sel))}</b> passport can go`:`Who can enter <b>${esc(name(sel))}</b>`}</span>`;
+  renderSummary();renderLegend();renderRegions();renderPanel();schedule();
+  document.documentElement.style.setProperty('--headH',$('#head').offsetHeight+'px');
+}
+renderAll();updScale();
+setTimeout(()=>{(window.requestIdleCallback||setTimeout)(loadHigh)},1200);
+if(document.fonts)document.fonts.ready.then(()=>{WCACHE.clear();schedule()});
 })();
 </script>
