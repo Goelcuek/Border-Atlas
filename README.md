@@ -2,7 +2,7 @@
 
 Interactive world map of visa and entry requirements. Pick a passport to see every destination coloured by what you need (visa-free, eTA, visa on arrival, e-Visa, visa required), or flip to "Travelling to" to see what every nationality needs to enter the selected country. Each country has an entry-requirements panel with passport validity, travel authorisations, arrival cards, fees and a link to the official source.
 
-**Live site:** https://goelcuek.github.io/border-atlas/
+**Live site:** https://goelcuek.github.io/Border-Atlas/
 
 ## Files
 - `index.html` – the complete site in one file (data and map geometry embedded; d3 and topojson load from cdnjs).
