@@ -1,0 +1,687 @@
+<title>Border Atlas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a passport "data page" header over a full-width map, then a two-column dossier (your passport | entering the selected country) with a detail sheet for any clicked border. */
+:root{
+  --bg:#eef1f5; --paper:#f8f9fb; --panel:#ffffff; --ink:#15202e; --muted:#5b6778; --line:#d6dce5; --soft:#e5e9f0;
+  --accent:#1f4fbf; --accent-ink:#ffffff; --ocean:#e3e9f1; --nodata:#c9cfd8; --land-stroke:#ffffff;
+  --c-free:#1c9a6b; --c-eta:#86bf4a; --c-voa:#e6b33e; --c-evisa:#ee8636; --c-req:#d4415a; --c-no:#4b3a52; --c-self:#1f4fbf;
+  --font-display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e141c; --paper:#121a24; --panel:#17212d; --ink:#e6ebf2; --muted:#93a0b2; --line:#283444; --soft:#1e2a38;
+  --accent:#6e9bff; --accent-ink:#0b1220; --ocean:#101924; --nodata:#2f3a48; --land-stroke:#0e141c;
+  --c-free:#2fb582; --c-eta:#93c95a; --c-voa:#e8bb4f; --c-evisa:#f0924a; --c-req:#e45b72; --c-no:#8b6f97; --c-self:#6e9bff; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e141c; --paper:#121a24; --panel:#17212d; --ink:#e6ebf2; --muted:#93a0b2; --line:#283444; --soft:#1e2a38;
+  --accent:#6e9bff; --accent-ink:#0b1220; --ocean:#101924; --nodata:#2f3a48; --land-stroke:#0e141c;
+  --c-free:#2fb582; --c-eta:#93c95a; --c-voa:#e8bb4f; --c-evisa:#f0924a; --c-req:#e45b72; --c-no:#8b6f97; --c-self:#6e9bff; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--font-mono)}
+.tab{font-variant-numeric:tabular-nums}
+
+/* Header */
+header.top{background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
+header.top .wrap{display:flex;align-items:center;gap:14px 20px;flex-wrap:wrap;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand svg{flex:none}
+.brand h1{font-family:var(--font-display);font-size:17px;font-weight:700;letter-spacing:.01em;margin:0}
+.brand small{display:block;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+
+.picker{position:relative;min-width:0;flex:1 1 300px;max-width:420px}
+.picker label{position:absolute;left:12px;top:6px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:var(--font-mono);pointer-events:none}
+.picker input{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:20px 40px 7px 12px;font-size:15px;font-weight:500}
+.picker .chev{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted)}
+.picker ul{position:absolute;left:0;right:0;top:calc(100% + 6px);max-height:min(60vh,420px);overflow:auto;margin:0;padding:6px;list-style:none;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 12px 40px rgba(10,20,40,.18);z-index:40}
+.picker li{display:flex;gap:10px;align-items:center;padding:7px 10px;border-radius:7px;cursor:pointer}
+.picker li[aria-selected="true"],.picker li:hover{background:var(--soft)}
+.picker li .iso{margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.flag{font-size:1.15em;line-height:1}
+
+.seg{display:inline-flex;background:var(--soft);border-radius:999px;padding:3px;border:1px solid var(--line)}
+.seg button{border:0;background:transparent;padding:7px 14px;border-radius:999px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--muted);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* Passport data strip */
+.datapage{display:grid;grid-template-columns:auto 1fr auto;gap:18px 24px;align-items:center;padding-block:22px 16px}
+.bigflag{font-size:56px;line-height:1;width:76px;height:76px;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.dp-main{min-width:0}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.dp-main h2{font-family:var(--font-display);font-weight:700;font-size:clamp(24px,3.4vw,40px);line-height:1.1;margin:4px 0 6px;text-wrap:balance}
+.dp-main p{margin:0;color:var(--muted);max-width:70ch}
+.mrz{grid-column:1/-1;font-family:var(--font-mono);font-size:clamp(10px,1.35vw,14px);letter-spacing:.18em;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:8px;padding:8px 12px;overflow:hidden;white-space:nowrap;text-overflow:clip}
+.score{display:flex;gap:22px;flex-wrap:wrap}
+.score div{min-width:92px}
+.score b{display:block;font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
+.score span{font-size:12px;color:var(--muted)}
+
+/* Map */
+.mapcard{position:relative;background:var(--ocean);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+#map{display:block;width:100%;height:clamp(300px,52vw,620px);cursor:grab;touch-action:none}
+#map:active{cursor:grabbing}
+#map path.c{stroke:var(--land-stroke);stroke-width:.5;vector-effect:non-scaling-stroke;transition:fill .35s ease,opacity .25s}
+#map circle.c{stroke:var(--land-stroke);stroke-width:1;vector-effect:non-scaling-stroke;transition:fill .35s ease,opacity .25s}
+#map .c{cursor:pointer;fill:var(--nodata)}
+#map .c:hover{stroke:var(--ink);stroke-width:1.4}
+#map .c.focus{stroke:var(--ink);stroke-width:2}
+.k-F{fill:var(--c-free)!important}.k-T{fill:var(--c-eta)!important}.k-A{fill:var(--c-voa)!important}.k-E{fill:var(--c-evisa)!important}.k-V{fill:var(--c-req)!important}.k-X{fill:var(--c-no)!important}.k-S{fill:var(--c-self)!important}
+#map .dim{opacity:.18}
+.mapbar{position:absolute;left:12px;right:12px;top:12px;display:flex;justify-content:space-between;gap:10px;pointer-events:none;flex-wrap:wrap}
+.mapbar>*{pointer-events:auto}
+.maptitle{background:color-mix(in srgb,var(--panel) 88%,transparent);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:500;max-width:100%}
+.zoom{display:flex;flex-direction:column;gap:6px;position:absolute;right:12px;bottom:12px}
+.zoom button{width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:18px;line-height:1;display:grid;place-items:center}
+.legend{display:flex;flex-wrap:wrap;gap:8px;padding:12px 0 0}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px 6px 8px;cursor:pointer;font-size:13px}
+.chip i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.chip b{font-variant-numeric:tabular-nums;font-weight:600}
+.chip[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.chip.off{opacity:.45}
+.hint{font-size:12.5px;color:var(--muted);margin-left:auto;align-self:center}
+.tip{position:fixed;z-index:60;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 11px;box-shadow:0 10px 30px rgba(10,20,40,.2);font-size:13px;max-width:260px}
+.tip strong{display:block;font-weight:600}
+.tip .pill{margin-top:4px}
+
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px 2px 8px;font-size:12.5px;font-weight:600;white-space:nowrap;background:var(--soft)}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.p-F{color:var(--c-free)}.p-T{color:var(--c-eta)}.p-A{color:var(--c-voa)}.p-E{color:var(--c-evisa)}.p-V{color:var(--c-req)}.p-X{color:var(--c-no)}.p-S{color:var(--c-self)}
+
+/* Dossier grid */
+.grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;padding-block:22px 40px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;min-width:0}
+.card+.card{margin-top:20px}
+.card h3{font-family:var(--font-display);font-weight:500;font-size:17px;margin:0 0 4px;text-wrap:balance}
+.card .sub{color:var(--muted);font-size:13.5px;margin:0 0 16px}
+.stack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--soft)}
+.stack span{display:block;height:100%}
+.regions{display:grid;gap:10px;margin-top:6px}
+.reg{display:grid;grid-template-columns:96px 1fr 64px;gap:12px;align-items:center;font-size:13.5px}
+.reg .n{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;font-size:12.5px}
+
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.tools input{flex:1 1 180px;min-width:0;border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:8px 12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:5px 10px;font-size:12.5px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.tabs button i{width:9px;height:9px;border-radius:50%}
+.list{max-height:520px;overflow:auto;margin:0 -6px;padding:0 6px}
+.group h4{position:sticky;top:0;background:var(--panel);margin:0;padding:10px 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:var(--font-mono);display:flex;gap:8px;align-items:center;z-index:1}
+.group h4 i{width:10px;height:10px;border-radius:3px}
+.rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 12px}
+.row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;cursor:pointer;border:0;background:transparent;text-align:left;width:100%;min-width:0}
+.row:hover{background:var(--soft)}
+.row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.row .d{margin-left:auto;font-family:var(--font-mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.empty{color:var(--muted);font-size:14px;padding:12px 0}
+
+/* Entry profile */
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px 16px;margin:4px 0 18px;padding:14px;background:var(--paper);border:1px solid var(--soft);border-radius:10px}
+.facts dt{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:2px 0 0;font-size:14px;font-weight:500}
+.reqs{display:grid;gap:0;margin:0}
+.reqs>div{display:grid;grid-template-columns:118px 1fr;gap:12px;padding:11px 0;border-top:1px solid var(--soft)}
+.reqs>div:first-child{border-top:0}
+.reqs dt{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+.reqs dd{margin:0;font-size:14.5px}
+.official{display:inline-flex;gap:8px;align-items:center;margin-top:14px;padding:9px 14px;border-radius:9px;background:var(--accent);color:var(--accent-ink);text-decoration:none;font-weight:600;font-size:14px}
+.tag{font-family:var(--font-mono);font-size:11px;padding:2px 7px;border-radius:5px;background:var(--soft);color:var(--muted);letter-spacing:.06em}
+.openbar{margin:4px 0 16px}
+.openbar .lbl{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+
+/* Sheet */
+.scrim{position:fixed;inset:0;background:rgba(8,14,24,.35);z-index:70}
+.sheet{position:fixed;z-index:80;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--panel);border-left:1px solid var(--line);box-shadow:-20px 0 60px rgba(10,20,40,.25);display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px);animation:slide .28s ease}
+@keyframes slide{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+.sheet header{display:flex;align-items:flex-start;gap:12px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.sheet header h3{font-family:var(--font-display);font-weight:700;font-size:20px;margin:2px 0 0;line-height:1.2}
+.sheet .x{margin-left:auto;border:1px solid var(--line);background:var(--paper);width:34px;height:34px;border-radius:9px;cursor:pointer;flex:none;font-size:18px}
+.sheet .body{overflow:auto;padding:18px 20px 28px}
+.route{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:14px;border-radius:12px;background:var(--paper);border:1px solid var(--soft);margin-bottom:16px}
+.route .end{text-align:center;min-width:0}
+.route .end .flag{font-size:30px;display:block}
+.route .end span{font-size:13px;font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.route .arrow{color:var(--muted);font-family:var(--font-mono)}
+.verdict{border-radius:12px;padding:14px 16px;margin-bottom:18px;border:1px solid var(--line)}
+.verdict b{display:block;font-family:var(--font-display);font-size:19px;font-weight:700;margin-bottom:4px}
+.verdict p{margin:0;font-size:14px;color:var(--muted)}
+.sheet h4{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:var(--font-mono);margin:22px 0 8px}
+.recip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btn{border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:8px 12px;cursor:pointer;font-weight:500;font-size:13.5px}
+
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+footer .wrap{padding-block:20px 30px;display:grid;gap:6px}
+footer a{color:var(--accent)}
+
+@media (max-width:960px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){
+  .datapage{grid-template-columns:auto 1fr}
+  .score{grid-column:1/-1}
+  .bigflag{font-size:40px;width:58px;height:58px}
+  .reqs>div{grid-template-columns:1fr;gap:2px}
+  .reg{grid-template-columns:78px 1fr 52px}
+  .sheet{top:auto;left:0;width:100%;max-height:88vh;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding-left:env(safe-area-inset-left,0px);animation:up .28s ease}
+  @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+  .hint{display:none}
+  header.top .wrap{gap:10px}
+  .seg{width:100%}.seg button{flex:1}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="2" width="24" height="28" rx="4" fill="var(--accent)"/><circle cx="16" cy="14" r="6.2" fill="none" stroke="var(--accent-ink)" stroke-width="1.6"/><path d="M9.8 14h12.4M16 7.8c2.4 2.2 2.4 10.2 0 12.4M16 7.8c-2.4 2.2-2.4 10.2 0 12.4" stroke="var(--accent-ink)" stroke-width="1.3" fill="none"/><rect x="10" y="24" width="12" height="1.6" rx=".8" fill="var(--accent-ink)"/></svg>
+      <div><h1>Border Atlas</h1><small>Visa &amp; entry requirements</small></div>
+    </div>
+    <div class="picker" id="picker">
+      <label for="pickIn">Your passport / country</label>
+      <input id="pickIn" type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="pickList">
+      <svg class="chev" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+      <ul id="pickList" role="listbox" hidden></ul>
+    </div>
+    <div class="seg" role="group" aria-label="Map direction">
+      <button id="modeOut" aria-pressed="true">Travelling from</button>
+      <button id="modeIn" aria-pressed="false">Travelling to</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="wrap datapage" id="datapage"></section>
+  <section class="wrap">
+    <div class="mapcard">
+      <svg id="map" role="img" aria-label="World map coloured by visa requirement"></svg>
+      <div class="mapbar"><div class="maptitle" id="mapTitle"></div></div>
+      <div class="zoom"><button id="zIn" aria-label="Zoom in">+</button><button id="zOut" aria-label="Zoom out">−</button><button id="zReset" aria-label="Reset view">⟲</button></div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </section>
+  <section class="wrap grid">
+    <div>
+      <div class="card" id="breakdown"></div>
+      <div class="card" id="listCard"></div>
+    </div>
+    <div>
+      <div class="card" id="entry"></div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+<div class="tip" id="tip" hidden></div>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="sheet" id="sheet" hidden aria-modal="true" role="dialog"></aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>/*DATA*/</script>
+<script>window.WORLD=/*WORLD*/;</script>
+<script>
+(function(){
+const V=window.VISA, CODES=V.codes, IDX={}; CODES.forEach((c,i)=>IDX[c]=i);
+const META={}; V.countries.forEach(c=>META[c.c]=c);
+const N=CODES.length;
+const CAT={
+  F:{label:'Visa-free',short:'Visa-free',color:'--c-free',desc:'No visa needed. Show your passport at the border.'},
+  T:{label:'Travel authorisation (eTA)',short:'eTA',color:'--c-eta',desc:'No visa, but an online travel authorisation must be approved before you board.'},
+  A:{label:'Visa on arrival',short:'On arrival',color:'--c-voa',desc:'Visa issued at the border or airport on arrival, usually for a fee. Some also offer the same visa online in advance.'},
+  E:{label:'e-Visa',short:'e-Visa',color:'--c-evisa',desc:'Apply and pay online before travel; print or carry the approval.'},
+  V:{label:'Visa required',short:'Visa required',color:'--c-req',desc:'A visa must be obtained in advance, usually through an embassy, consulate or visa centre.'},
+  X:{label:'No admission',short:'No admission',color:'--c-no',desc:'Holders of this passport are currently refused entry or entry is suspended.'}
+};
+const ORDER=['F','T','A','E','V','X'];
+const REGIONS=['Europe','Asia','Africa','Americas','Oceania'];
+
+/* ---------- Curated entry profiles ---------- */
+const SCH='AUT BEL BGR HRV CZE DNK EST FIN FRA DEU GRC HUN ISL ITA LVA LIE LTU LUX MLT NLD NOR POL PRT ROU SVK SVN ESP SWE CHE'.split(' ');
+const EU='AUT BEL BGR HRV CYP CZE DNK EST FIN FRA DEU GRC HUN IRL ITA LVA LTU LUX MLT NLD POL PRT ROU SVK SVN ESP SWE'.split(' ');
+const schengenProfile={
+  tags:['Schengen area','EES active','ETIAS: late 2026'],
+  items:[
+    ['Passport','Valid at least 3 months beyond your planned departure from the Schengen area, and issued within the last 10 years.'],
+    ['Stay','Visa-exempt visitors may stay up to 90 days in any rolling 180-day period, counted across all 29 Schengen countries together.'],
+    ['Border','The Entry/Exit System (EES) records fingerprints and a facial image for non-EU travellers on first entry and replaces passport stamps. Allow extra time at the border.'],
+    ['ETIAS','Visa-exempt nationals will need an ETIAS travel authorisation (€20, valid 3 years or until the passport expires) once it launches, scheduled for the last quarter of 2026.'],
+    ['Visa holders','A short-stay Schengen visa requires travel medical insurance with at least €30,000 cover, plus proof of accommodation, funds and return travel. Apply to the country of main destination.'],
+    ['EU citizens','EU, EEA and Swiss citizens travel with a passport or national ID card under freedom of movement.']
+  ],
+  link:['EU travel portal (EES / ETIAS)','https://travel-europe.europa.eu/']
+};
+const P={
+GBR:{tags:['ETA required for visa-exempt'],items:[
+  ['Passport','Must be valid for the whole of your stay.'],
+  ['ETA','Visa-exempt visitors, including EU citizens, need an Electronic Travel Authorisation before travel. It costs £20, allows multiple stays of up to 6 months, and lasts 2 years or until the passport expires. Every traveller, including children, needs their own.'],
+  ['Exempt','Irish citizens, and anyone with UK residence or a valid UK visa.'],
+  ['Timing','Decisions usually arrive within 3 working days; apply at least a week ahead using the UK ETA app.'],
+  ['Visa nationals','Others need a Standard Visitor visa, applied for online with biometrics at a visa centre.']],
+  link:['GOV.UK: Electronic Travel Authorisation','https://www.gov.uk/guidance/apply-for-an-electronic-travel-authorisation-eta']},
+IRL:{tags:['Not Schengen','Common Travel Area'],items:[
+  ['Passport','Valid for the duration of your stay.'],
+  ['Stay','Visa-exempt visitors usually receive up to 90 days permission at the border.'],
+  ['Schengen','Ireland is in the EU but not in the Schengen area, so a Schengen visa does not cover Ireland. ETIAS will not apply.'],
+  ['UK link','Ireland and the UK form the Common Travel Area. Certain visa nationals with a UK visa can visit Ireland under the British-Irish Visa Scheme.']],
+  link:['Irish Immigration Service','https://www.irishimmigration.ie/']},
+CYP:{tags:['EU, not Schengen'],items:[
+  ['Passport','Valid at least 3 months beyond departure.'],
+  ['Schengen','Cyprus applies EU rules but is not yet a full Schengen member. Holders of a valid multiple-entry Schengen visa can usually enter for up to 90 days.'],
+  ['North','Crossings to and from the north of the island are subject to separate checks.'],
+  ['ETIAS','Expected to apply to Cyprus when it launches.']],
+  link:['Cyprus Ministry of Foreign Affairs','https://mfa.gov.cy/']},
+USA:{tags:['ESTA for Visa Waiver Program'],items:[
+  ['ESTA','Citizens of Visa Waiver Program countries need an approved ESTA to arrive by air or sea. Fee $40, valid 2 years, stays of up to 90 days. Apply at least 72 hours before departure.'],
+  ['Passport','Must be an electronic passport (chip). Many nationalities are exempt from the six-month validity rule, but the passport must be valid for the whole stay.'],
+  ['Visa','Everyone else needs a B1/B2 visitor visa, which involves an in-person consular interview. Wait times can run to months.'],
+  ['Exempt','Canadian and Bermudian citizens generally need neither a visa nor an ESTA for visits.'],
+  ['At the border','Officers decide admission and length of stay. Social media handles and travel history may be requested.']],
+  link:['Official ESTA site','https://esta.cbp.dhs.gov/']},
+CAN:{tags:['eTA for air arrivals'],items:[
+  ['eTA','Visa-exempt travellers flying to or transiting through Canada need an eTA: CAD 7, valid 5 years or until passport expiry. Not needed when arriving by land or sea.'],
+  ['Exempt','US citizens, and US lawful permanent residents carrying their green card.'],
+  ['Stay','Typically up to 6 months, set by the border officer.'],
+  ['Visa','Visa nationals apply online for a visitor visa and give biometrics.']],
+  link:['Government of Canada: eTA','https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada/eta.html']},
+MEX:{tags:['Digital FMM'],items:[
+  ['Stay','Many nationalities enter visa-free; the officer sets the stay, up to 180 days, sometimes fewer.'],
+  ['Visa holders','A valid US, Canadian, UK, Japanese or Schengen visa, or permanent residence there, lets most visa nationals enter without a Mexican visa.'],
+  ['Arrival','Your entry is recorded digitally (FMM) at major airports; keep the stamp or record until you leave.'],
+  ['Proof','Be ready to show return tickets, hotel bookings and funds.']],
+  link:['Instituto Nacional de Migración','https://www.gob.mx/inm']},
+BRA:{tags:['e-Visa for US/CA/AU since 2025'],items:[
+  ['Change','Since 10 April 2025, US, Canadian and Australian citizens again need a visa, issued online as an e-Visa.'],
+  ['Visa-free','EU, UK, most South American and many other nationals can stay up to 90 days.'],
+  ['ID entry','Mercosur and associated-state citizens can enter with a national ID card.'],
+  ['Health','Yellow fever vaccination is recommended for many regions.']],
+  link:['Brazil Ministry of Foreign Affairs: visas','https://www.gov.br/mre/en/subjects/visas']},
+ARG:{items:[
+  ['Stay','Most Western and Latin American nationals are visa-free for up to 90 days.'],
+  ['ID entry','Mercosur citizens may use a national ID card.'],
+  ['Passport','Valid for the duration of stay.']],
+  link:['Dirección Nacional de Migraciones','https://www.argentina.gob.ar/interior/migraciones']},
+COL:{tags:['Check-MIG form'],items:[
+  ['Stay','Visa-exempt visitors get up to 90 days, extendable to 180 days per calendar year.'],
+  ['Pre-registration','Complete the free Check-MIG form online within 72 hours before travel.'],
+  ['Passport','Valid on arrival; six months recommended by airlines.']],
+  link:['Migración Colombia: Check-MIG','https://apps.migracioncolombia.gov.co/pre-registro/']},
+PER:{items:[['Stay','Many nationalities are visa-free; the officer grants up to 183 days.'],['ID entry','Andean Community and some Mercosur citizens may use national ID.'],['Passport','Six months validity recommended.']],link:['Migraciones Perú','https://www.gob.pe/migraciones']},
+CHL:{items:[['Stay','Most visa-exempt visitors receive up to 90 days.'],['Arrival','A tourist card is issued electronically on arrival; keep it until departure.'],['Passport','Valid for the stay.']],link:['Servicio Nacional de Migraciones','https://serviciomigraciones.cl/']},
+CUB:{tags:['Tourist card','D\'Viajeros form'],items:[
+  ['Visa','Most visitors need a tourist card (tarjeta del turista), sold by airlines, agencies or online.'],
+  ['Form','Complete the D\'Viajeros declaration online before arrival.'],
+  ['Insurance','Travel medical insurance is mandatory and may be checked.'],
+  ['US rules','US citizens also face US sanctions rules limiting travel categories.']],
+  link:['D\'Viajeros','https://dviajeros.mitrans.gob.cu/']},
+JPN:{tags:['Visit Japan Web'],items:[
+  ['Stay','Citizens of around 70 countries are visa-exempt, mostly for up to 90 days.'],
+  ['Passport','Valid for the duration of stay.'],
+  ['Arrival','Register on Visit Japan Web before travel to get QR codes for immigration and customs.'],
+  ['Coming','A pre-travel authorisation (JESTA) is planned, expected around 2028.'],
+  ['Medicines','Some common medicines, including stimulant-containing ones, are restricted. Check before packing.']],
+  link:['Visit Japan Web','https://www.vjw.digital.go.jp/']},
+KOR:{tags:['K-ETA','e-Arrival card'],items:[
+  ['K-ETA','Visa-exempt nationals normally need a K-ETA before boarding. Citizens of 22 countries, including the US, UK, Japan, Australia and most of Western Europe, are exempt until 31 December 2026.'],
+  ['Arrival card','Submit the e-Arrival card online within 3 days before arrival if you are exempt from K-ETA.'],
+  ['Stay','Typically 30 to 90 days depending on nationality.']],
+  link:['Official K-ETA site','https://www.k-eta.go.kr/']},
+CHN:{tags:['30-day visa-free (≈50 countries)','240-hour transit'],items:[
+  ['Visa-free','Ordinary passport holders from about 50 countries, including most of Europe, the UK, Canada, Australia, New Zealand, Japan, South Korea, several Gulf and South American states, can stay up to 30 days without a visa until 31 December 2026.'],
+  ['Transit','Citizens of 55 countries, including the US, can stay up to 240 hours visa-free when transiting to a third country via designated ports, with a confirmed onward ticket.'],
+  ['Passport','Valid at least 6 months on arrival.'],
+  ['Arrival','Fill in the arrival card online or at the airport kiosk. Hotels register your stay with police; private stays must be registered within 24 hours.'],
+  ['Payments','Set up Alipay or WeChat Pay with a foreign card before you go.']],
+  link:['National Immigration Administration','https://en.nia.gov.cn/']},
+HKG:{items:[['Separate system','Hong Kong runs its own immigration; a mainland China visa is not needed.'],['Stay','About 170 nationalities are visa-free for 7 to 180 days.'],['Passport','Valid at least 1 month beyond your stay.']],link:['Hong Kong Immigration Department','https://www.immd.gov.hk/']},
+MAC:{items:[['Separate system','Macao has its own entry rules, distinct from mainland China.'],['Stay','Most visitors are visa-free for 30 to 90 days.']],link:['Macao Public Security Police','https://www.fsm.gov.mo/psp/eng/']},
+TWN:{items:[['Stay','Many nationalities are visa-free for 30 to 90 days.'],['Arrival card','Submit the online arrival card before landing to speed up immigration.'],['Passport','Valid at least 6 months.']],link:['Taiwan National Immigration Agency','https://www.immigration.gov.tw/']},
+IND:{tags:['e-Visa'],items:[
+  ['e-Visa','Available to about 170 nationalities: tourist e-Visa for 30 days (double entry), 1 year or 5 years (multiple entry). Apply at least 4 days ahead.'],
+  ['Passport','Valid at least 6 months from arrival, with at least 2 blank pages.'],
+  ['Arrival','A digital arrival card can be filled in before landing.'],
+  ['Exempt','Nepali and Bhutanese citizens need no visa.']],
+  link:['Official Indian e-Visa','https://indianvisaonline.gov.in/evisa/']},
+THA:{tags:['TDAC arrival card'],items:[
+  ['Arrival card','The Thailand Digital Arrival Card (TDAC) has been mandatory since 1 May 2025. Submit it online within 3 days before arrival; it is free.'],
+  ['Visa-free','Citizens of about 90 countries can stay without a visa, currently up to 60 days. The government has discussed shortening this, so check before booking.'],
+  ['Passport','Valid at least 6 months.'],
+  ['Proof','Officers can ask for an onward ticket and proof of funds (20,000 THB per person).'],
+  ['e-Visa','Visa nationals apply through the official Thai e-Visa system.']],
+  link:['Thailand Digital Arrival Card','https://tdac.immigration.go.th/']},
+VNM:{tags:['e-Visa for all'],items:[
+  ['e-Visa','Open to all nationalities: single or multiple entry, up to 90 days.'],
+  ['Visa-free','Several European countries, Japan and South Korea get 45 days visa-free.'],
+  ['Passport','Valid at least 6 months.']],
+  link:['Official Vietnam e-Visa','https://evisa.gov.vn/']},
+IDN:{tags:['e-VOA','Bali levy'],items:[
+  ['Visa','Most visitors use the e-VOA (IDR 500,000), applied online, for 30 days extendable once. ASEAN citizens are visa-free.'],
+  ['Arrival card','Complete the All Indonesia digital arrival card (immigration, customs, health) within 3 days before arrival.'],
+  ['Bali','A tourist levy of IDR 150,000 is charged for visits to Bali.'],
+  ['Passport','Valid at least 6 months with a blank page.']],
+  link:['Indonesia e-Visa','https://evisa.imigrasi.go.id/']},
+MYS:{tags:['MDAC'],items:[
+  ['Arrival card','Submit the Malaysia Digital Arrival Card (MDAC) within 3 days before arrival. Singapore citizens are exempt.'],
+  ['Stay','Most Western nationalities get 90 days visa-free.'],
+  ['Passport','Valid at least 6 months.']],
+  link:['Malaysia Digital Arrival Card','https://imigresen-online.imi.gov.my/mdac/main']},
+SGP:{tags:['SG Arrival Card'],items:[
+  ['Arrival card','Submit the free SG Arrival Card online within 3 days before arrival.'],
+  ['Stay','Visa-free visitors usually get 30 or 90 days.'],
+  ['Passport','Valid at least 6 months.'],
+  ['Customs','Strict rules on chewing gum, e-cigarettes and medicines.']],
+  link:['ICA SG Arrival Card','https://eservices.ica.gov.sg/sgarrivalcard/']},
+PHL:{tags:['eTravel'],items:[
+  ['Registration','Register on eTravel (free) within 72 hours before arrival.'],
+  ['Stay','Many nationalities are visa-free for 30 days, some for longer.'],
+  ['Onward','A return or onward ticket is required.']],
+  link:['Philippines eTravel','https://etravel.gov.ph/']},
+ARE:{items:[
+  ['Visa','Many nationalities, including EU, UK and US citizens, get a free visa on arrival for 30 or 90 days.'],
+  ['Others','Some visa nationals holding a US visa, green card, or UK/EU residence qualify for a visa on arrival.'],
+  ['Passport','Valid at least 6 months.'],
+  ['Medicines','Bring prescriptions; some medicines are controlled.']],
+  link:['UAE government portal: visas','https://u.ae/en/information-and-services/visa-and-emirates-id']},
+SAU:{tags:['Tourist e-Visa'],items:[
+  ['e-Visa','Around 60 nationalities can get a tourist e-Visa or visa on arrival: 1-year multiple entry, up to 90 days in total, insurance included.'],
+  ['Visa holders','Holders of US, UK or Schengen visas (used at least once) can usually get a visa on arrival.'],
+  ['Note','Tourist visas do not allow Hajj.']],
+  link:['Visit Saudi e-Visa','https://visa.visitsaudi.com/']},
+QAT:{items:[['Visa-free','Many nationalities are visa-free for 30 to 90 days.'],['Others','Apply for an e-Visa through the Hayya platform.'],['Passport','Valid at least 6 months.']],link:['Hayya','https://www.hayya.qa/']},
+TUR:{tags:['e-Visa'],items:[
+  ['Passport','Valid at least 150 days from entry, and 60 days beyond the end of your permitted stay.'],
+  ['Visa-free','Most Europeans, plus US and Canadian citizens (since 2024), can stay up to 90 days in any 180.'],
+  ['e-Visa','Eligible nationals apply at the official e-Visa site; avoid third-party sites that charge extra.'],
+  ['ID entry','Citizens of several EU countries can enter with a national ID card.']],
+  link:['Official Turkish e-Visa','https://www.evisa.gov.tr/']},
+EGY:{items:[
+  ['Visa','A visa on arrival ($25) is available at major airports for many nationalities, or apply for an e-Visa in advance.'],
+  ['Sinai','Visits to Sharm el-Sheikh and Red Sea resorts in South Sinai can use a free stamp valid 15 days.'],
+  ['Passport','Valid at least 6 months.']],
+  link:['Egypt e-Visa portal','https://visa2egypt.gov.eg/']},
+MAR:{items:[['Visa-free','Many nationalities get 90 days visa-free.'],['e-Visa','Some visa nationals can apply online.'],['Passport','Valid for the stay; 6 months recommended.']],link:['Morocco e-Visa','https://www.acces-maroc.ma/']},
+ZAF:{items:[
+  ['Visa-free','Many nationalities get 30 or 90 days.'],
+  ['Passport','Valid at least 30 days beyond departure, with at least 2 blank pages for stamps.'],
+  ['Children','Carrying an unabridged birth certificate for minors is strongly recommended.'],
+  ['Health','Yellow fever certificate required if arriving from a risk country.']],
+  link:['Department of Home Affairs','https://www.dha.gov.za/']},
+KEN:{tags:['eTA'],items:[
+  ['eTA','Most visitors need an Electronic Travel Authorisation, applied for online before travel. Most African nationals are exempt.'],
+  ['Passport','Valid at least 6 months with a blank page.'],
+  ['Health','Yellow fever vaccination recommended; certificate needed if arriving from a risk country.']],
+  link:['Kenya eTA','https://www.etakenya.go.ke/']},
+TZA:{items:[['Visa','Most visitors apply for an e-Visa in advance.'],['Health','Yellow fever certificate required if arriving from or transiting a risk country.'],['Passport','Valid at least 6 months.']],link:['Tanzania e-Visa','https://visa.immigration.go.tz/']},
+RUS:{tags:['Unified e-Visa'],items:[
+  ['e-Visa','Citizens of about 55 countries can apply for a unified e-Visa allowing stays of up to 16 days.'],
+  ['Others','A consular visa with an invitation is needed for longer or other trips.'],
+  ['Registration','Your stay must be registered within 7 working days; hotels do this for you.'],
+  ['Money','Foreign-issued Visa and Mastercard cards do not work in Russia.'],
+  ['Advisories','Many governments advise against all travel to Russia.']],
+  link:['Russian e-Visa','https://evisa.kdmid.ru/']},
+GEO:{items:[['Visa-free','Citizens of about 95 countries can stay up to one year without a visa.'],['Insurance','Travel health insurance is mandatory for foreign visitors from 2026.'],['e-Visa','Others can apply online.']],link:['Georgia e-Visa portal','https://www.evisa.gov.ge/']},
+ISR:{tags:['ETA-IL'],items:[
+  ['ETA-IL','Since 1 January 2025 visa-exempt nationals must obtain an ETA-IL before travel (ILS 25, valid up to 2 years).'],
+  ['Passport','Valid at least 6 months.'],
+  ['Border','No stamp is placed in the passport; you receive an entry slip instead.'],
+  ['Advisories','Check your government\'s current travel advice before planning.']],
+  link:['ETA-IL official site','https://israel-entry.piba.gov.il/']},
+LKA:{tags:['ETA'],items:[['ETA','Most visitors need an ETA, applied for online before travel.'],['Passport','Valid at least 6 months.']],link:['Sri Lanka ETA','https://www.eta.gov.lk/']},
+KHM:{tags:['e-Arrival'],items:[['Visa','Tourist e-Visa online or visa on arrival.'],['Arrival','Complete the Cambodia e-Arrival card before arrival.'],['Passport','Valid at least 6 months with a blank page.']],link:['Cambodia e-Visa','https://www.evisa.gov.kh/']},
+NPL:{items:[['Visa','Visa on arrival for 15, 30 or 90 days; can be pre-filled online.'],['Exempt','Indian citizens need no visa.'],['Passport','Valid at least 6 months.']],link:['Nepal Department of Immigration','https://www.immigration.gov.np/']},
+MDV:{tags:['Free 30-day VOA'],items:[['Visa','Every nationality receives a free 30-day visa on arrival with confirmed accommodation and an onward ticket.'],['Declaration','Submit the IMUGA traveller declaration within 96 hours before arrival.'],['Customs','Alcohol and pork may not be brought in.']],link:['IMUGA','https://imuga.immigration.gov.mv/']},
+JOR:{items:[['Visa','Most visitors get a visa on arrival.'],['Jordan Pass','The Jordan Pass covers the visa fee for stays of at least 3 nights and includes Petra entry.'],['Passport','Valid at least 6 months.']],link:['Jordan Pass','https://www.jordanpass.jo/']},
+AUS:{tags:['ETA / eVisitor'],items:[
+  ['Authorisation','Every visitor except New Zealanders needs a visa or authorisation. Eligible passports use the ETA via the AustralianETA app (AUD 20 service fee); EU and several European passports use the free eVisitor.'],
+  ['Stay','Up to 3 months per visit within 12 months of grant.'],
+  ['Others','Apply online for a Visitor visa (subclass 600).'],
+  ['Biosecurity','Declare all food, plant and animal products. Penalties are strict.']],
+  link:['Department of Home Affairs','https://immi.homeaffairs.gov.au/']},
+NZL:{tags:['NZeTA + IVL'],items:[
+  ['NZeTA','Visa-waiver visitors need an NZeTA (NZD 17 via app) plus the International Visitor Conservation and Tourism Levy (NZD 100).'],
+  ['Exempt','Australian citizens need neither.'],
+  ['Declaration','Complete the NZ Traveller Declaration before arrival.'],
+  ['Biosecurity','Declare food, outdoor gear and plant or animal items.']],
+  link:['Immigration New Zealand: NZeTA','https://www.immigration.govt.nz/new-zealand-visas/visas/visa/nzeta']},
+BTN:{items:[['Visa','All visitors except Indian, Bangladeshi and Maldivian nationals need a visa arranged in advance.'],['SDF','A Sustainable Development Fee applies per night (USD 100 for most visitors).']],link:['Bhutan Department of Tourism','https://www.bhutan.travel/']}
+};
+SCH.forEach(c=>{if(!P[c])P[c]=schengenProfile});
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+function req(p,d){const k=V.m[IDX[p]][IDX[d]];const days=(V.d[p]||{})[d]||0;return{k:k==='-'?'S':k,days}}
+function daysTxt(r){if(r.k!=='F')return'';if(!r.days)return'No limit';return r.days+' days'}
+function name(c){return META[c]?META[c].n:c}
+function flag(c){return META[c]&&META[c].f?META[c].f:'🏳'}
+function cssv(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+function outStats(p){const s={F:0,T:0,A:0,E:0,V:0,X:0};CODES.forEach(d=>{if(d!==p)s[req(p,d).k]++});return s}
+function inStats(d){const s={F:0,T:0,A:0,E:0,V:0,X:0};CODES.forEach(p=>{if(d!==p)s[req(p,d).k]++});return s}
+const mob=s=>s.F+s.T+s.A;
+// mobility ranks
+const MOB={};CODES.forEach(c=>MOB[c]=mob(outStats(c)));
+const sortedMob=[...new Set(Object.values(MOB))].sort((a,b)=>b-a);
+const rankOf=c=>sortedMob.indexOf(MOB[c])+1;
+const OPEN={};CODES.forEach(c=>OPEN[c]=mob(inStats(c)));
+const sortedOpen=[...new Set(Object.values(OPEN))].sort((a,b)=>b-a);
+const openRankOf=c=>sortedOpen.indexOf(OPEN[c])+1;
+
+/* ---------- state ---------- */
+let sel='TUR', mode='out', filter=null, listTab='all', q='';
+try{const s=localStorage.getItem('ba.sel');if(s&&IDX[s]!==undefined)sel=s;const m=localStorage.getItem('ba.mode');if(m==='in'||m==='out')mode=m}catch(e){}
+function save(){try{localStorage.setItem('ba.sel',sel);localStorage.setItem('ba.mode',mode)}catch(e){}}
+// requirement shown on map for country c, relative to selected
+function relReq(c){return mode==='out'?req(sel,c):req(c,sel)}
+
+/* ---------- map ---------- */
+const svg=d3.select('#map');
+const g=svg.append('g');
+const world=window.WORLD;
+const fc=topojson.feature(world,world.objects.countries);
+fc.features=fc.features.filter(f=>f.properties.name!=='Antarctica');
+const NUM={};V.countries.forEach(c=>{if(c.num)NUM[String(c.num).padStart(3,'0')]=c.c});
+fc.features.forEach(f=>{f.code=f.properties.name==='Kosovo'?'XKX':(f.id?NUM[String(f.id).padStart(3,'0')]:null)});
+const W=1000,H=520;
+svg.attr('viewBox',`0 0 ${W} ${H}`).attr('preserveAspectRatio','xMidYMid meet');
+const proj=d3.geoNaturalEarth1().fitExtent([[8,8],[W-8,H-8]],{type:'FeatureCollection',features:fc.features});
+const path=d3.geoPath(proj);
+g.append('path').attr('d',path(d3.geoGraticule10())).attr('fill','none').attr('stroke','var(--line)').attr('stroke-width',.4).attr('vector-effect','non-scaling-stroke').attr('opacity',.6);
+const shapes=g.append('g').selectAll('path').data(fc.features).join('path').attr('class','c').attr('d',path);
+// dots for small or missing countries
+const have={};fc.features.forEach(f=>{if(f.code){const a=path.area(f);have[f.code]=Math.max(have[f.code]||0,a)}});
+const dotData=V.countries.filter(c=>(have[c.c]===undefined||have[c.c]<6)&&c.ll&&(c.ll[0]||c.ll[1])).map(c=>{const p=proj([c.ll[1],c.ll[0]]);return{code:c.c,x:p[0],y:p[1]}});
+const dots=g.append('g').selectAll('circle').data(dotData).join('circle').attr('class','c').attr('cx',d=>d.x).attr('cy',d=>d.y).attr('r',3.2);
+const zoom=d3.zoom().scaleExtent([1,12]).translateExtent([[0,0],[W,H]]).on('zoom',e=>{g.attr('transform',e.transform);dots.attr('r',3.2/Math.sqrt(e.transform.k))});
+svg.call(zoom).on('dblclick.zoom',null);
+$('#zIn').onclick=()=>svg.transition().duration(300).call(zoom.scaleBy,1.6);
+$('#zOut').onclick=()=>svg.transition().duration(300).call(zoom.scaleBy,1/1.6);
+$('#zReset').onclick=()=>svg.transition().duration(400).call(zoom.transform,d3.zoomIdentity);
+
+const tip=$('#tip');
+function tipHTML(code){
+  if(!code||IDX[code]===undefined)return null;
+  if(code===sel)return`<strong>${flag(code)} ${esc(name(code))}</strong><span class="pill p-S">Selected</span>`;
+  const r=relReq(code);
+  const who=mode==='out'?`${esc(name(sel))} passport → here`:`${esc(name(code))} passport → ${esc(name(sel))}`;
+  return`<strong>${flag(code)} ${esc(name(code))}</strong><span style="color:var(--muted);font-size:12px">${who}</span><br><span class="pill p-${r.k}">${CAT[r.k].short}${daysTxt(r)?' · '+daysTxt(r):''}</span>`;
+}
+function bindHover(sel_){
+  sel_.on('mousemove',(e,d)=>{const h=tipHTML(d.code);if(!h){tip.hidden=true;return}tip.innerHTML=h;tip.hidden=false;
+      const x=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8),y=Math.min(e.clientY+14,innerHeight-tip.offsetHeight-8);tip.style.left=x+'px';tip.style.top=y+'px'})
+    .on('mouseleave',()=>tip.hidden=true)
+    .on('click',(e,d)=>{tip.hidden=true;if(d.code&&IDX[d.code]!==undefined)openSheet(d.code)});
+}
+bindHover(shapes);bindHover(dots);
+shapes.append('title').text(d=>d.code?name(d.code):d.properties.name+' (no data)');
+
+function paintMap(){
+  const cls=d=>{if(!d.code||IDX[d.code]===undefined)return'c';const k=d.code===sel?'S':relReq(d.code).k;const dim=filter&&k!=='S'&&k!==filter;return`c k-${k}${dim?' dim':''}`};
+  shapes.attr('class',cls);dots.attr('class',cls);
+  $('#mapTitle').innerHTML=mode==='out'
+    ?`${flag(sel)} What a <b>${esc(name(sel))}</b> passport needs, by destination`
+    :`${flag(sel)} What each passport needs to enter <b>${esc(name(sel))}</b>`;
+}
+
+/* ---------- picker ---------- */
+const pin=$('#pickIn'),plist=$('#pickList');
+const sortedCountries=[...V.countries].sort((a,b)=>a.n.localeCompare(b.n));
+let active=0,shown=[];
+function renderPick(f){
+  const t=(f||'').toLowerCase().trim();
+  shown=sortedCountries.filter(c=>!t||c.n.toLowerCase().includes(t)||c.c.toLowerCase()===t||(c.o||'').toLowerCase().includes(t));
+  active=0;
+  plist.innerHTML=shown.map((c,i)=>`<li role="option" id="opt-${c.c}" data-c="${c.c}" aria-selected="${i===0}"><span class="flag">${c.f}</span>${esc(c.n)}<span class="iso">${c.c}</span></li>`).join('')||'<li class="empty">No country matches</li>';
+}
+function openPick(){renderPick('');plist.hidden=false;pin.setAttribute('aria-expanded','true');pin.select()}
+function closePick(){plist.hidden=true;pin.setAttribute('aria-expanded','false');pin.value=`${flag(sel)}  ${name(sel)}`}
+pin.addEventListener('focus',openPick);
+pin.addEventListener('input',()=>{renderPick(pin.value);plist.hidden=false});
+pin.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!shown.length)return;active=(active+(e.key==='ArrowDown'?1:-1)+shown.length)%shown.length;
+    [...plist.children].forEach((li,i)=>li.setAttribute('aria-selected',i===active));plist.children[active].scrollIntoView({block:'nearest'})}
+  else if(e.key==='Enter'){e.preventDefault();if(shown[active]){choose(shown[active].c);pin.blur()}}
+  else if(e.key==='Escape'){closePick();pin.blur()}
+});
+plist.addEventListener('mousedown',e=>{const li=e.target.closest('li[data-c]');if(li){e.preventDefault();choose(li.dataset.c);pin.blur()}});
+pin.addEventListener('blur',()=>setTimeout(closePick,120));
+function choose(c){sel=c;filter=null;q='';listTab='all';save();renderAll();closePick()}
+
+/* ---------- mode ---------- */
+function setMode(m){mode=m;filter=null;save();$('#modeOut').setAttribute('aria-pressed',m==='out');$('#modeIn').setAttribute('aria-pressed',m==='in');renderAll()}
+$('#modeOut').onclick=()=>setMode('out');$('#modeIn').onclick=()=>setMode('in');
+
+/* ---------- sections ---------- */
+function mrz(c){const n=name(c).toUpperCase().replace(/[^A-Z ]/g,'').replace(/ +/g,'<');let l1=('P<'+c+n+'<<TRAVELLER').padEnd(44,'<').slice(0,44);let l2=(c+'0000000<0'+c+'9001017M3012315<<<<<<<<<<<<<<06').padEnd(44,'<').slice(0,44);return (l1+'   '+l2).replace(/</g,'&lt;').replace(/ /g,'&nbsp;')}
+function renderHeader(){
+  const m=META[sel], so=outStats(sel), si=inStats(sel);
+  $('#datapage').innerHTML=`
+   <div class="bigflag" aria-hidden="true">${m.f}</div>
+   <div class="dp-main"><div class="eyebrow">${esc(m.r)}${m.sr&&m.sr!==m.r?' · '+esc(m.sr):''} · ${sel}</div>
+     <h2>${esc(m.n)}</h2>
+     <p>${mode==='out'?`A ${esc(m.n)} passport opens <b>${mob(so)}</b> of ${N-1} destinations without a prior visa (visa-free, eTA or visa on arrival).`:`<b>${OPEN[sel]}</b> of ${N-1} passports can enter ${esc(m.n)} without arranging a visa in advance.`}</p></div>
+   <div class="score">
+     <div><b class="tab">${mob(so)}</b><span>Mobility score</span></div>
+     <div><b class="tab">#${rankOf(sel)}</b><span>Passport rank</span></div>
+     <div><b class="tab">${OPEN[sel]}</b><span>Passports welcomed</span></div>
+   </div>
+   <div class="mrz" aria-hidden="true">${mrz(sel)}</div>`;
+}
+function renderLegend(){
+  const s=mode==='out'?outStats(sel):inStats(sel);
+  $('#legend').innerHTML=ORDER.filter(k=>s[k]>0||k!=='X').map(k=>`<button class="chip${filter&&filter!==k?' off':''}" data-k="${k}" aria-pressed="${filter===k}"><i style="background:var(${CAT[k].color})"></i>${CAT[k].label} <b>${s[k]}</b></button>`).join('')
+   +`<span class="chip" style="cursor:default"><i style="background:var(--c-self)"></i>Selected</span><span class="chip" style="cursor:default"><i style="background:var(--nodata)"></i>Territory / no data</span><span class="hint">Tap a category to isolate it · tap any country for details</span>`;
+  $('#legend').querySelectorAll('button.chip').forEach(b=>b.onclick=()=>{filter=filter===b.dataset.k?null:b.dataset.k;listTab=filter||'all';renderLegend();paintMap();renderList()});
+}
+function renderBreakdown(){
+  const s=mode==='out'?outStats(sel):inStats(sel), tot=N-1;
+  const bar=st=>{const t=ORDER.reduce((a,k)=>a+st[k],0)||1;return`<div class="stack">${ORDER.map(k=>st[k]?`<span style="width:${st[k]/t*100}%;background:var(${CAT[k].color})" title="${CAT[k].label}: ${st[k]}"></span>`:'').join('')}</div>`};
+  const rows=REGIONS.map(r=>{const st={F:0,T:0,A:0,E:0,V:0,X:0};let n=0,easy=0;CODES.forEach(c=>{if(c===sel||META[c].r!==r)return;const k=relReq(c).k;st[k]++;n++;if('FTA'.includes(k))easy++});return`<div class="reg"><span>${r}</span>${bar(st)}<span class="n">${easy}/${n}</span></div>`}).join('');
+  const longest=mode==='out'?CODES.filter(c=>c!==sel&&req(sel,c).k==='F'&&req(sel,c).days>=180).length:0;
+  $('#breakdown').innerHTML=`<h3>${mode==='out'?'Where this passport takes you':'Who can come in'}</h3>
+   <p class="sub">${mode==='out'?`Share of ${tot} destinations by entry type, then by region. Right column: destinations open without a prior visa.`:`Share of ${tot} passports by what they need to enter ${esc(name(sel))}.`}</p>
+   ${bar(s)}
+   <div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 18px;font-size:13px;color:var(--muted)">${ORDER.filter(k=>s[k]).map(k=>`<span><b style="color:var(--ink)" class="tab">${Math.round(s[k]/tot*100)}%</b> ${CAT[k].short.toLowerCase()}</span>`).join('')}${longest?`<span><b style="color:var(--ink)" class="tab">${longest}</b> allow 180+ days</span>`:''}</div>
+   <div class="regions">${rows}</div>`;
+}
+function renderList(){
+  const card=$('#listCard');
+  const s=mode==='out'?outStats(sel):inStats(sel);
+  const groups=ORDER.map(k=>({k,items:CODES.filter(c=>c!==sel&&relReq(c).k===k&&(!q||name(c).toLowerCase().includes(q))).sort((a,b)=>name(a).localeCompare(name(b)))}));
+  const vis=groups.filter(gr=>gr.items.length&&(listTab==='all'||listTab===gr.k));
+  card.innerHTML=`<h3>${mode==='out'?'All destinations':'All passports'}</h3>
+   <p class="sub">${mode==='out'?`Entry rules for ${esc(name(sel))} citizens, with the maximum visa-free stay.`:`Rules for each nationality entering ${esc(name(sel))}.`}</p>
+   <div class="tools"><input id="q" type="search" placeholder="Filter by country name" value="${esc(q)}" aria-label="Filter list"></div>
+   <div class="tabs"><button data-t="all" aria-pressed="${listTab==='all'}">All <span class="tab">${N-1}</span></button>${ORDER.filter(k=>s[k]).map(k=>`<button data-t="${k}" aria-pressed="${listTab===k}"><i style="background:var(${CAT[k].color})"></i>${CAT[k].short} <span class="tab">${s[k]}</span></button>`).join('')}</div>
+   <div class="list">${vis.length?vis.map(gr=>`<div class="group"><h4><i style="background:var(${CAT[gr.k].color})"></i>${CAT[gr.k].label} · ${gr.items.length}</h4><div class="rows">${gr.items.map(c=>{const r=relReq(c);return`<button class="row" data-c="${c}"><span class="flag">${flag(c)}</span><span class="nm">${esc(name(c))}</span><span class="d">${daysTxt(r)}</span></button>`}).join('')}</div></div>`).join(''):'<p class="empty">No countries match this filter.</p>'}</div>`;
+  const qi=card.querySelector('#q');
+  qi.oninput=()=>{q=qi.value.toLowerCase().trim();const pos=qi.selectionStart;renderList();const n=$('#q');n.focus();n.setSelectionRange(pos,pos)};
+  card.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{listTab=b.dataset.t;filter=listTab==='all'?null:listTab;renderList();renderLegend();paintMap()});
+  card.querySelectorAll('.row').forEach(b=>b.onclick=()=>openSheet(b.dataset.c));
+}
+function genericProfile(c){
+  const si=inStats(c),m=META[c];
+  const dom=ORDER.reduce((a,k)=>si[k]>si[a]?k:a,'F');
+  const items=[
+    ['Most visitors',`${CAT[dom].label} applies to ${si[dom]} of ${N-1} nationalities.`],
+    ['Passport','Carry a passport valid at least 6 months beyond your arrival with at least one blank page; many airlines enforce this even where the law is looser.'],
+    ['Proof','Expect to show a return or onward ticket, accommodation details and enough funds for the stay.']
+  ];
+  if(si.A)items.push(['On arrival',`${si.A} nationalities can get a visa at the border. Carry cash in USD or EUR and passport photos in case card payment is unavailable.`]);
+  if(si.E)items.push(['e-Visa',`${si.E} nationalities apply online in advance. Use the government portal and avoid look-alike agent sites.`]);
+  if(m.r==='Africa'||m.sr==='South America')items.push(['Health','A yellow fever vaccination certificate may be required, particularly if you arrive from or transit through a risk country.']);
+  return{items,generic:true};
+}
+function renderEntry(){
+  const c=sel,m=META[c],p=P[c]||genericProfile(c),si=inStats(c);
+  const t=N-1;
+  $('#entry').innerHTML=`<div class="eyebrow">Entry requirements</div>
+   <h3 style="font-size:22px;font-weight:700;margin-top:4px">Entering ${esc(m.n)}</h3>
+   <p class="sub">${p.generic?'General guidance built from the visa data. ':'Key rules for visitors. '}Always confirm with the official source before you travel.</p>
+   ${(p.tags||[]).length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin:-6px 0 14px">${p.tags.map(x=>`<span class="tag">${esc(x)}</span>`).join('')}</div>`:''}
+   <dl class="facts">
+     <div><dt>Capital</dt><dd>${esc(m.cap||'—')}</dd></div>
+     <div><dt>Currency</dt><dd>${esc(m.cur.join(', ')||'—')}</dd></div>
+     <div><dt>Languages</dt><dd>${esc(m.lang.join(', ')||'—')}</dd></div>
+     <div><dt>Dialling code</dt><dd class="mono">${esc(m.idd||'—')}</dd></div>
+     <div><dt>Openness rank</dt><dd class="tab">#${openRankOf(c)} of ${sortedOpen.length} tiers</dd></div>
+     <div><dt>Land borders</dt><dd>${m.b.length?m.b.length+' countries':'None (island / enclave)'}</dd></div>
+   </dl>
+   <div class="openbar"><div class="lbl"><span>Passports that need no prior visa</span><span class="tab">${OPEN[c]} / ${t}</span></div>
+     <div class="stack">${ORDER.map(k=>si[k]?`<span style="width:${si[k]/t*100}%;background:var(${CAT[k].color})" title="${CAT[k].label}: ${si[k]}"></span>`:'').join('')}</div></div>
+   <dl class="reqs">${p.items.map(([a,b])=>`<div><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join('')}</dl>
+   ${p.link?`<a class="official" href="${p.link[1]}" target="_blank" rel="noopener">${esc(p.link[0])} ↗</a>`:`<a class="official" href="https://www.iatatravelcentre.com/" target="_blank" rel="noopener">IATA Travel Centre ↗</a>`}
+   <div class="btnrow"><button class="btn" id="seeIn">${mode==='in'?'Showing who can enter on the map':'Show who can enter on the map'}</button></div>`;
+  $('#seeIn').onclick=()=>{if(mode!=='in'){setMode('in')}document.querySelector('.mapcard').scrollIntoView({behavior:'smooth',block:'center'})};
+}
+
+/* ---------- detail sheet ---------- */
+const sheet=$('#sheet'),scrim=$('#scrim');let lastFocus=null;
+function openSheet(c){
+  lastFocus=document.activeElement;
+  const from=mode==='out'?sel:c, to=mode==='out'?c:sel;
+  const r=req(from,to), back=req(to,from), pm=META[to], prof=P[to]||genericProfile(to);
+  const verdictColor=`var(${CAT[r.k]?.color||'--c-self'})`;
+  const sameEU=EU.includes(from)&&(EU.includes(to)||SCH.includes(to));
+  let note=CAT[r.k]?CAT[r.k].desc:'';
+  if(r.k==='F'&&r.days)note=`Visa-free for up to ${r.days} days. `+(SCH.includes(to)&&!EU.includes(from)&&!['ISL','NOR','CHE','LIE'].includes(from)?'Schengen days are counted across all member states.':'');
+  if(r.k==='F'&&!r.days)note=sameEU?'Freedom of movement: no time limit for short visits, and a national ID card is usually enough.':'Visa-free with no fixed limit for visits.';
+  sheet.innerHTML=`<header><div><div class="eyebrow">${from===to?'':'Border detail'}</div><h3>${flag(to)} ${esc(name(to))}</h3></div><button class="x" id="sx" aria-label="Close">×</button></header>
+   <div class="body">
+    <div class="route"><div class="end"><span class="flag">${flag(from)}</span><span>${esc(name(from))} passport</span></div><div class="arrow">──▶</div><div class="end"><span class="flag">${flag(to)}</span><span>${esc(name(to))}</span></div></div>
+    <div class="verdict" style="border-color:${verdictColor};background:color-mix(in srgb,${verdictColor} 10%,var(--panel))"><b style="color:${verdictColor}">${CAT[r.k]?CAT[r.k].label:'Home country'}${daysTxt(r)&&r.days?' · '+r.days+' days':''}</b><p>${esc(note)}</p></div>
+    <h4>The other way</h4>
+    <div class="recip"><span>${flag(to)} ${esc(name(to))} passport → ${flag(from)} ${esc(name(from))}</span><span class="pill p-${back.k}">${CAT[back.k]?CAT[back.k].short:''}${back.k==='F'&&back.days?' · '+back.days+' d':''}</span>${back.k===r.k?'<span class="tag">Reciprocal</span>':'<span class="tag">Not reciprocal</span>'}</div>
+    <h4>Entering ${esc(pm.n)}</h4>
+    <dl class="reqs">${prof.items.map(([a,b])=>`<div><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join('')}</dl>
+    <h4>Quick facts</h4>
+    <dl class="facts" style="margin-bottom:0"><div><dt>Capital</dt><dd>${esc(pm.cap||'—')}</dd></div><div><dt>Currency</dt><dd>${esc(pm.cur.join(', ')||'—')}</dd></div><div><dt>Languages</dt><dd>${esc(pm.lang.join(', ')||'—')}</dd></div><div><dt>Passports welcomed</dt><dd class="tab">${OPEN[to]} / ${N-1}</dd></div></dl>
+    ${prof.link?`<a class="official" href="${prof.link[1]}" target="_blank" rel="noopener">${esc(prof.link[0])} ↗</a>`:`<a class="official" href="https://www.iatatravelcentre.com/" target="_blank" rel="noopener">Check on IATA Travel Centre ↗</a>`}
+    <div class="btnrow"><button class="btn" id="mk">Make ${esc(name(c))} the selected country</button></div>
+   </div>`;
+  sheet.hidden=false;scrim.hidden=false;
+  shapes.classed('focus',d=>d.code===c);dots.classed('focus',d=>d.code===c);
+  $('#sx').onclick=closeSheet;$('#mk').onclick=()=>{closeSheet();choose(c);window.scrollTo({top:0,behavior:'smooth'})};
+  $('#sx').focus();
+}
+function closeSheet(){sheet.hidden=true;scrim.hidden=true;shapes.classed('focus',false);dots.classed('focus',false);if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+scrim.onclick=closeSheet;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!sheet.hidden)closeSheet()});
+
+$('#foot').innerHTML=`<div>Visa matrix: <a href="https://github.com/ilyankou/passport-index-dataset" target="_blank" rel="noopener">Passport Index open dataset</a> (199 passports × 199 destinations, January 2025), updated for later changes: UK ETA extended to EU and all visa-exempt nationals (2025), Israel ETA-IL (2025), visas reinstated by Brazil for US, Canadian and Australian citizens (April 2025), and China's 30-day visa-free list including the UK and Canada (Feb 2026) and Russia.</div><div>Entry rules change often and can depend on purpose of travel, residence permits and passport type. This page covers ordinary passports for short tourist visits. Confirm with the destination's official source or your airline before travelling. Reviewed October 2026.</div><div>Map: Natural Earth via world-atlas. Small states are drawn as dots.</div>`;
+
+function renderAll(){$('#modeOut').setAttribute('aria-pressed',mode==='out');$('#modeIn').setAttribute('aria-pressed',mode==='in');pin.value=`${flag(sel)}  ${name(sel)}`;renderHeader();paintMap();renderLegend();renderBreakdown();renderList();renderEntry()}
+renderAll();
+})();
+</script>
